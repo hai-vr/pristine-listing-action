@@ -17,20 +17,20 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: '8.0.x'
+        dotnet-version: '9.0.x'
 
-    - name: Install dotnet-script
-      run: dotnet tool install -g dotnet-script
+    - name: Build project
+      run: dotnet build pristine-listing-action
 
-    ## - name: Generate index.json
-    ##  run: dotnet-script Main.cs
+    - name: Run project
+      run: dotnet run --project pristine-listing-action
 
     ## From https://github.com/actions/upload-pages-artifact (MIT)
     - name: Upload static files as artifact
       id: deployment
       uses: actions/upload-pages-artifact@v3
       with:
-        path: output/ ## Hai: index.json needs to be in there.
+        path: output/ # Hai: index.json needs to be in there.
 
   ## From https://github.com/actions/deploy-pages (MIT)
   deploy:
