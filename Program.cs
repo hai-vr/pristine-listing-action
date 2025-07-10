@@ -40,17 +40,17 @@ internal class Program
 
     private async Task Run()
     {
-        var inputUns = JObject.Parse(_inputJson);
-        var listingDataUns = inputUns[InputListingData];
+        var input = JsonConvert.DeserializeObject<PLInput>(_inputJson);
+        var listingData = input.listingData;
 
-        var listingStructure = NewListing(listingDataUns);
+        var outputListing = NewOutputListing(listingData);
 
-        var packages = await AsPackages(inputUns[InputGithubReleases]);
-        listingStructure.packages = packages
+        var packages = await AsPackages(input.products);
+        outputListing.packages = packages
             .Where(package => package.versions.Count > 0)
             .ToDictionary(package => package.versions.First().Value.name);
 
-        var outputJson = JsonConvert.SerializeObject(listingStructure, Formatting.Indented, new JsonSerializerSettings
+        var outputJson = JsonConvert.SerializeObject(outputListing, Formatting.Indented, new JsonSerializerSettings
         {
             NullValueHandling = NullValueHandling.Ignore
         });
@@ -59,24 +59,24 @@ internal class Program
         await File.WriteAllTextAsync(_outputIndexJson, outputJson, Encoding.UTF8);
     }
 
-    private static PLListing NewListing(JToken listingData)
+    private static PLOutputListing NewOutputListing(PLInputListingData listingData)
     {
-        return new PLListing
+        return new PLOutputListing
         {
-            name = (string)listingData[ListingName],
-            author = (string)listingData[ListingAuthor],
-            url = (string)listingData[ListingUrl],
-            id = (string)listingData[ListingId],
+            name = listingData.name,
+            author = listingData.author,
+            url = listingData.url,
+            id = listingData.id,
             packages = new Dictionary<string, PLPackage>()
         };
     }
 
-    private async Task<PLPackage[]> AsPackages(JToken githubReleases)
+    private async Task<PLPackage[]> AsPackages(List<PLProducts> products)
     {
         var cts = new CancellationTokenSource();
         try
         {
-            var results = await Task.WhenAll(githubReleases.Select(githubRelease => NavigatePackage((string)githubRelease, cts)));
+            var results = await Task.WhenAll(products.Select(product => NavigatePackage(product.repository, cts)));
             return results;
         }
         catch (Exception)

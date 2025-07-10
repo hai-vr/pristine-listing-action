@@ -1,4 +1,4 @@
-﻿public class PLListing
+﻿public class PLOutputListing
 {
     public string name;
     public string author;
