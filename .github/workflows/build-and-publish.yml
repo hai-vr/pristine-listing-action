@@ -20,10 +20,10 @@ jobs:
         dotnet-version: '9.0.x'
 
     - name: Build project
-      run: dotnet build pristine-listing-action
+      run: dotnet build pristine-listing-action.csproj
 
     - name: Run project
-      run: dotnet run --project pristine-listing-action
+      run: dotnet run --project pristine-listing-action.csproj
 
     ## From https://github.com/actions/upload-pages-artifact (MIT)
     - name: Upload static files as artifact
