@@ -1,0 +1,11 @@
+﻿{
+    "listingData": {
+        "name": "https://docs.hai-vr.dev",
+        "author": "Haï~",
+        "url": "https://hai-vr.github.io/vpm-listing/index.json",
+        "id": "dev.hai-vr.vpm"
+    },
+    "githubReleases": [
+        "hai-vr/lightbox-viewer"
+    ]
+}
