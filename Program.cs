@@ -129,7 +129,8 @@ internal class Program
     {
         var zipAsset = releaseUns[ReleaseAsset].First(IsAssetThatZipFile);
         var downloadCount = zipAsset["download_count"].Value<int>();
-        var downloadZip = await DownloadZip(zipAsset["browser_download_url"].Value<string>(), source);
+        var downloadUrl = zipAsset["browser_download_url"].Value<string>();
+        var downloadZip = await DownloadZip(downloadUrl, source);
 
         var package = JObject.Parse(downloadZip.packageJson);
         
@@ -158,7 +159,7 @@ internal class Program
             {
                 name = authorName
             },
-            url = package["url"]?.Value<string>(),
+            url = downloadUrl,
             documentationUrl = package["documentationUrl"]?.Value<string>(),
             changelogUrl = package["changelogUrl"]?.Value<string>(),
             license = package["license"]?.Value<string>(),
