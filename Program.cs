@@ -3,6 +3,7 @@ using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
+using Markdig;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
@@ -121,8 +122,10 @@ internal class Program
             }
             sw.WriteLine("");
         }
-        
-        await File.WriteAllTextAsync("output/index.html", sw.ToString(), Encoding.UTF8);
+
+        var markdown = sw.ToString();
+        var html = Markdown.ToHtml(markdown);
+        await File.WriteAllTextAsync("output/index.html", html, Encoding.UTF8);
     }
 
     private static PLOutputListing NewOutputListing(PLInputListingData listingData)
