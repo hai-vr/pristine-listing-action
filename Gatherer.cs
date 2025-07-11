@@ -34,6 +34,10 @@ internal class PLGatherer
         var packages = await AsPackages(input.products);
         outputListing.packages = packages
             .Where(package => package.versions.Count > 0)
+            // NOTE: This doesn't support multiple repositories adding to the same package name.
+            // This is generally not a problem as we're aggregating from repositories that we have ownership of,
+            // however if there is ever a case where there's a need to aggregate from multiple repositories
+            // owned by different people, then this case might crop up.
             .ToDictionary(package => package.versions.First().Value.name);
 
         return outputListing;
@@ -80,18 +84,22 @@ internal class PLGatherer
 
             var releasesUns = await FetchReleaseDataUnstructured(owner, repo, source);
 
-            var package = new PLPackage
-            {
-                versions = new Dictionary<string, PLPackageVersion>()
-            };
-
-            var relevantPackages = releasesUns
+            var relevantReleases = releasesUns
                 .Where(ThereAreAssets)
                 .Where(AtLeastOneOfTheAssetsIsPackageJson)
                 .Where(IfThereIsABodyThenItDoesNotContainTheHiddenTag)
                 .ToList();
 
-            var packageVersions = await Task.WhenAll(relevantPackages.Select(releaseUns => CompilePackage(source, releaseUns)));
+            var package = new PLPackage
+            {
+                versions = new Dictionary<string, PLPackageVersion>()
+            };
+
+            // An assumption is made that relevantReleases (and by extension releasesUns) is already stably sorted
+            // by version from more recent versions to older versions.
+            // Unsure how much impact this may affect repository listing client applications (e.g. VPM Catalog, ALCOM, ...),
+            // but we do make the assumption in the Outputter that the most recent package is the first in the versions list.
+            var packageVersions = await Task.WhenAll(relevantReleases.Select(releaseUns => DownloadAndCompilePackage(source, releaseUns)));
             foreach (var packageVersion in packageVersions)
             {
                 package.versions.Add(packageVersion.version, packageVersion);
@@ -121,7 +129,7 @@ internal class PLGatherer
         return releaseUns["body"] == null || !releaseUns["body"].Value<string>().Contains(HiddenBodyTag);
     }
 
-    private async Task<PLPackageVersion> CompilePackage(CancellationTokenSource source, JToken releaseUns)
+    private async Task<PLPackageVersion> DownloadAndCompilePackage(CancellationTokenSource source, JToken releaseUns)
     {
         // This will download the ZIP file of the release, in order to calculate "zipSHA256". This isn't really used.
         if (_excessiveMode) return await ExcessiveMode(source, releaseUns);
