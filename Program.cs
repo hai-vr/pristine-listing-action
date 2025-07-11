@@ -63,7 +63,6 @@ internal class Program
         {
             NullValueHandling = NullValueHandling.Ignore
         });
-        Console.WriteLine(outputJson);
 
         await File.WriteAllTextAsync(_outputIndexJson, outputJson, Encoding.UTF8);
     }
@@ -199,6 +198,8 @@ internal class Program
 
     private async Task<PLIntermediary> DownloadZip(string zipUrl, CancellationTokenSource source)
     {
+        Console.WriteLine($"Downloading zip {zipUrl}...");
+        
         var request = NewRequest(zipUrl);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
 
