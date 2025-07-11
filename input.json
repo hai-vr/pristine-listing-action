@@ -6,7 +6,32 @@
         "id": "dev.hai-vr.pristine-developeronly"
     },
     "products": [
+        { "repository" : "hai-vr/animation-viewer-vcc" },
+        { "repository" : "hai-vr/animator-as-code-ndmf-processor" },
+        { "repository" : "hai-vr/animator-as-code-vrchat" },
+        { "repository" : "hai-vr/animator-as-code-vrchat-destructive-workflow" },
+        { "repository" : "hai-vr/av3-animator-as-code" },
+        { "repository" : "hai-vr/blendshape-viewer-vcc" },
+        { "repository" : "hai-vr/blendtree-viewer" },
+        { "repository" : "hai-vr/chillaxins" },
+        { "repository" : "hai-vr/combo-gesture-expressions-av3" },
+        { "repository" : "hai-vr/constraint-tools" },
+        { "repository" : "hai-vr/convert-combogesture-to-faceemo" },
+        { "repository" : "hai-vr/denormalized-avatar-exporter" },
+        { "repository" : "hai-vr/external-expressions-menu" },
+        { "repository" : "hai-vr/fuck-osc-config" },
+        { "repository" : "hai-vr/h-view" },
+        { "repository" : "hai-vr/let-me-see" },
         { "repository" : "hai-vr/lightbox-viewer" },
-        { "repository" : "hai-vr/lightbox-viewer-urp" }
+        { "repository" : "hai-vr/lightbox-viewer-urp" },
+        { "repository" : "hai-vr/modular-avatar-as-code" },
+        { "repository" : "hai-vr/prefabulous-avatar" },
+        { "repository" : "hai-vr/prefabulous-for-conversions" },
+        { "repository" : "hai-vr/prefabulous-for-vrm" },
+        { "repository" : "hai-vr/prefabulous-universal" },
+        { "repository" : "hai-vr/property-finder" },
+        { "repository" : "hai-vr/resilience-toolkit" },
+        { "repository" : "hai-vr/vcc-dependencies-for-vixen" },
+        { "repository" : "hai-vr/visual-expressions-editor-vcc"}
     ]
 }
