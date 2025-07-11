@@ -21,3 +21,4 @@ You should not use this repository as a workflow action unless you fork it first
 - Information about `"samples"` in the package.json is not exposed to the repository listing.
 - Caching is not implemented, so this will cause all `package.json` to be downloaded every time this action is run.
 - The generated website is rudimentary and not meant for public use.
+- The description is modified, with the number of downloads of the last version appended to it.
