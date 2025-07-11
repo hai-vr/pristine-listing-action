@@ -20,7 +20,4 @@ You should not use this repository as a workflow action unless you fork it first
 - If the body of GitHub release notes contains the substring `$\texttt{Hidden}$` then that release is ignored.
 - Information about `"samples"` in the package.json is not exposed to the repository listing.
 - Caching is not implemented, so this will cause all `package.json` to be downloaded every time this action is run.
-
-## Non-goals
-
-A user-browsable website is not implemented; this generates the listing JSON only.
+- The generated website is rudimentary and not meant for public use.

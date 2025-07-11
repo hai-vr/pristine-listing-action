@@ -32,6 +32,8 @@ public class PLPackageVersion
     public string zipSHA256;
     public string url;
     public Dictionary<string, string> legacyFolders; // VRC-specific
+
+    internal int downloadCount; // This is internal so that it doesn't get serialized to Json
 }
 
 public class PLAuthor

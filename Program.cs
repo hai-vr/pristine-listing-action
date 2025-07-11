@@ -95,6 +95,7 @@ internal class Program
             var firstVersion = versions.Values.First();
             sw.WriteLine($"- displayName: {firstVersion.displayName}");
             sw.WriteLine($"- description: {firstVersion.description}");
+            sw.WriteLine($"- totalDownloadCount: {versions.Values.Select(version => version.downloadCount).Sum()}");
             if (firstVersion.changelogUrl != null) sw.WriteLine($"- changelogUrl: {firstVersion.changelogUrl}");
             if (firstVersion.documentationUrl != null) sw.WriteLine($"- documentationUrl: {firstVersion.documentationUrl}");
             if (firstVersion.unity != null) sw.WriteLine($"- unity: {firstVersion.unity}");
@@ -118,13 +119,14 @@ internal class Program
             sw.WriteLine($"- versions:");
             foreach (var version in versions.Values)
             {
-                sw.WriteLine($"  - {version.version}");
+                sw.WriteLine($"  - {version.version} -> {version.downloadCount}");
             }
             sw.WriteLine("");
         }
 
         var markdown = sw.ToString();
         var html = Markdown.ToHtml(markdown);
+        await File.WriteAllTextAsync("output/list.md", markdown, Encoding.UTF8);
         await File.WriteAllTextAsync("output/index.html", html, Encoding.UTF8);
     }
 
@@ -270,6 +272,8 @@ internal class Program
             
             vrchatVersion = package["vrchatVersion"]?.Value<string>(),
             legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
+            
+            downloadCount = downloadCount
         };
     }
 
