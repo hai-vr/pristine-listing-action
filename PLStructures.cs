@@ -39,6 +39,8 @@ public class PLPackageVersion
 public class PLAuthor
 {
     public string name;
+    public string email;
+    public string url;
 }
 
 public class PLSample

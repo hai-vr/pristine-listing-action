@@ -174,10 +174,7 @@ internal class PLGatherer
             description = package["description"]?.Value<string>(),
             dependencies = AsDictionary(package["dependencies"]?.Value<JObject>()),
             vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>()),
-            author = new PLAuthor
-            {
-                name = ExtractAuthorName(package)
-            },
+            author = ExtractAuthorUnionField(package["author"]),
             url = downloadUrl,
             documentationUrl = package["documentationUrl"]?.Value<string>(),
             changelogUrl = package["changelogUrl"]?.Value<string>(),
@@ -191,17 +188,25 @@ internal class PLGatherer
         };
     }
 
-    private static string ExtractAuthorName(JObject package)
+    private static PLAuthor ExtractAuthorUnionField(JToken authorToken)
     {
-        var authorToken = package["author"];
         // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-        var authorName = authorToken.Type switch
+        return authorToken.Type switch
         {
-            JTokenType.Object => authorToken.Value<JObject>()[PackageJsonAuthorName].Value<string>(),
-            JTokenType.String => authorToken.Value<string>(),
+            JTokenType.Object => ExtractAuthorObject(authorToken.Value<JObject>()),
+            JTokenType.String => new PLAuthor { name = authorToken.Value<string>() },
             _  => throw new DataException("Can't deserialize author from package.json")
         };
-        return authorName;
+    }
+
+    private static PLAuthor ExtractAuthorObject(JObject authorObject)
+    {
+        return new PLAuthor
+        {
+            name = authorObject[PackageJsonAuthorName].Value<string>(),
+            email = authorObject["email"]?.Value<string>(),
+            url = authorObject["url"]?.Value<string>(),
+        };
     }
 
     private Dictionary<string, string> AsDictionary(JObject obj)
