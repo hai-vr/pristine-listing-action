@@ -6,6 +6,9 @@ on:
       gh_token:
         required: true
 
+env:
+  subfolder: subf
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -25,7 +28,8 @@ jobs:
       with:
         repository: ${{ github.repository }}
         ref: ${{ github.ref }}
-        clean: false
+        path: ${{ env.subfolder }}
+        clean: 'false'
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
@@ -33,12 +37,12 @@ jobs:
         dotnet-version: '9.0.x'
 
     - name: Build project
-      run: dotnet build pristine-listing-action.csproj
+      run: dotnet build ${{ env.subfolder }}/pristine-listing-action.csproj
 
     - name: Run project
       env:
         IN__GITHUB_TOKEN: ${{ secrets.gh_token }}
-      run: dotnet run --project pristine-listing-action.csproj
+      run: dotnet run --project ${{ env.subfolder }}/pristine-listing-action.csproj
 
     ## From https://github.com/actions/upload-pages-artifact (MIT)
     - name: Upload static files as artifact
