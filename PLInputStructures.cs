@@ -1,4 +1,6 @@
-﻿public class PLInput
+﻿namespace Hai.PristineListing;
+
+public class PLInput
 {
     public PLInputListingData listingData;
     public List<PLProducts> products;

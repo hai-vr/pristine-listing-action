@@ -6,6 +6,7 @@
         "id": "dev.hai-vr.vpm"
     },
     "products": [
-        { "repository" : "hai-vr/lightbox-viewer" }
+        { "repository" : "hai-vr/lightbox-viewer" },
+        { "repository" : "hai-vr/lightbox-viewer-urp" }
     ]
 }

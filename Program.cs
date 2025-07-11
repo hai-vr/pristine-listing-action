@@ -1,19 +1,19 @@
-﻿using System.Net.Http.Headers;
+﻿using System.Data;
+using System.IO.Compression;
+using System.Net.Http.Headers;
+using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 
+namespace Hai.PristineListing;
+
 internal class Program
 {
-    private const string InputListingData = "listingData";
-    private const string InputGithubReleases = "githubReleases";
-    private const string ListingName = "name";
-    private const string ListingAuthor = "author";
-    private const string ListingUrl = "url";
-    private const string ListingId = "id";
-    private const string ReleaseTagName = "tag_name";
     private const string ReleaseAsset = "assets";
     private const string AssetName = "name";
+    private const string PackageJsonAuthorName = "name";
+    private const string PackageName = "name";
 
     private readonly string _inputJson;
     private readonly string _outputIndexJson;
@@ -105,34 +105,12 @@ internal class Program
                 versions = new Dictionary<string, PLPackageVersion>()
             };
 
-            var packageVersions = releasesUns
+            var relevantPackages = releasesUns
                 .Where(releaseUns => releaseUns[ReleaseAsset] != null)
                 .Where(releaseUns => releaseUns[ReleaseAsset].Any(asset => asset[AssetName].Value<string>() == "package.json"))
-                .Select(releaseUns =>
-                {
-                    var zipAsset = releaseUns[ReleaseAsset].First(assetUns => assetUns["content_type"].Value<string>() == "application/zip");
-                    var downloadCount = zipAsset["download_count"].Value<int>();
-                    
-                    return new PLPackageVersion
-                    {
-                        name = "test", // TODO (it must not be null)
-                        displayName = null, // TODO
-                        version = (string)releaseUns[ReleaseTagName], // FIXME: Check if this is correct
-                        unity = null, // TODO
-                        description = $"(Downloaded {downloadCount} times)", // FIXME: This is not correct
-                        vpmDependencies = null, // TODO
-                        author = null, // TODO
-                        changelogUrl = null, // TODO
-                        documentationUrl = null, // TODO
-                        license = null, // TODO
-                        vrchatVersion = null, // TODO
-                        zipSHA256 = null, // TODO
-                        url = null, // TODO
-                        legacyFolders = null, // TODO
-                    };
-                })
                 .ToList();
-            
+
+            var packageVersions = await Task.WhenAll(relevantPackages.Select(releaseUns => DownloadAndCompilePackage(source, releaseUns)));
             foreach (var packageVersion in packageVersions)
             {
                 package.versions.Add(packageVersion.version, packageVersion);
@@ -147,13 +125,106 @@ internal class Program
         }
     }
 
+    private async Task<PLPackageVersion> DownloadAndCompilePackage(CancellationTokenSource source, JToken releaseUns)
+    {
+        var zipAsset = releaseUns[ReleaseAsset].First(IsAssetThatZipFile);
+        var downloadCount = zipAsset["download_count"].Value<int>();
+        var downloadZip = await DownloadZip(zipAsset["browser_download_url"].Value<string>(), source);
+
+        var package = JObject.Parse(downloadZip.packageJson);
+        
+        var authorToken = package["author"];
+        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
+        var authorName = authorToken.Type switch
+        {
+            JTokenType.Object => authorToken.Value<JObject>()[PackageJsonAuthorName].Value<string>(),
+            JTokenType.String => authorToken.Value<string>(),
+            _  => throw new DataException("Can't deserialize author from package.json")
+        };
+
+        var displayName = package["displayName"].Value<string>();
+        var description = package["description"]?.Value<string>() ?? displayName;
+
+        return new PLPackageVersion
+        {
+            name = package[PackageName].Value<string>(),
+            displayName = displayName,
+            version = package["version"].Value<string>(), // Was formerly: (string)releaseUns[ReleaseTagName]
+            unity = package["unity"]?.Value<string>(),
+            description = $"{description} (Downloaded {downloadCount} times)",
+            dependencies = AsDictionary(package["dependencies"]?.Value<JObject>()),
+            vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>()),
+            author = new PLAuthor
+            {
+                name = authorName
+            },
+            url = package["url"]?.Value<string>(),
+            documentationUrl = package["documentationUrl"]?.Value<string>(),
+            changelogUrl = package["changelogUrl"]?.Value<string>(),
+            license = package["license"]?.Value<string>(),
+            zipSHA256 = downloadZip.hashHex,
+            
+            vrchatVersion = package["vrchatVersion"]?.Value<string>(),
+            legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
+        };
+    }
+
+    private Dictionary<string, string> AsDictionary(JObject obj)
+    {
+        if (obj == null) return null;
+        
+        var legacyFolders = new Dictionary<string, string>();
+        foreach (var keyValuePair in obj)
+        {
+            legacyFolders[keyValuePair.Key] = keyValuePair.Value.Value<string>();
+        }
+
+        return legacyFolders;
+    }
+
+    private static bool IsAssetThatZipFile(JToken assetUns)
+    {
+        return assetUns["content_type"].Value<string>() == "application/zip" && assetUns[AssetName].Value<string>().ToLowerInvariant().EndsWith(".zip");
+    }
+
+    private async Task<PLIntermediary> DownloadZip(string zipUrl, CancellationTokenSource source)
+    {
+        var request = NewRequest(zipUrl);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
+
+        var response = await _http.SendAsync(request, source.Token);
+        if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
+
+        var data = await response.Content.ReadAsByteArrayAsync();
+        
+        var hashBytes = SHA256.HashData(data);
+        var hashHex = Convert.ToHexStringLower(hashBytes);
+
+        var packageJson = Unzip(data);
+        return new PLIntermediary
+        {
+            hashHex = hashHex,
+            packageJson = packageJson
+        };
+    }
+
+    private string Unzip(byte[] data)
+    {
+        using var stream = new MemoryStream(data);
+        using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
+
+        var entry = archive.GetEntry("package.json");
+        if (entry == null) throw new FileNotFoundException("Missing package.json from .zip. We should not unzip in the first place if it wasn't a package to begin with.");
+
+        using var reader = new StreamReader(entry.Open(), Encoding.UTF8);
+        return reader.ReadToEnd();
+    }
+
     private async Task<JArray> FetchReleaseDataUnstructured(string owner, string repo, CancellationTokenSource source)
     {
         var apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases";
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _githubToken);
-        request.Headers.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
+        using var request = NewRequest(apiUrl);
         
         var response = await _http.SendAsync(request, source.Token);
         if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
@@ -161,6 +232,14 @@ internal class Program
         var responseStr = await response.Content.ReadAsStringAsync(source.Token);
         var releases = JArray.Parse(responseStr);
         return releases;
+    }
+
+    private HttpRequestMessage NewRequest(string url)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _githubToken);
+        request.Headers.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
+        return request;
     }
 
     private static void ParseRepository(string repository, out string owner, out string repo)
