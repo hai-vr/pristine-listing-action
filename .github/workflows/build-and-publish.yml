@@ -22,6 +22,7 @@ jobs:
       with:
         repository: ${{ github.repository }}
         ref: ${{ github.ref }}
+        clean: false
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
