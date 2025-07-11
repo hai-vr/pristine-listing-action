@@ -12,6 +12,9 @@ public class PLOutputListing
 public class PLPackage
 {
     public Dictionary<string, PLPackageVersion> versions;
+
+    internal int totalDownloadCount; // This is internal so that it doesn't get serialized to Json
+    
 }
 
 public class PLPackageVersion

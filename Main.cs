@@ -7,7 +7,8 @@ internal class Program
 {
     private readonly string _inputFile;
     private readonly bool _includeDownloadCount;
-    
+    private readonly bool _devOnly;
+
     private readonly PLGatherer _gatherer;
     private readonly PLOutputter _outputter;
 
@@ -22,14 +23,18 @@ internal class Program
 
             var excessiveMode = false;
             var includeDownloadCount = false;
+            var devOnly = false;
 
             if (bool.TryParse(EnvVar("IN__EXCESSIVE_MODE"), out var doExcessiveMode)) excessiveMode = doExcessiveMode;
             if (bool.TryParse(EnvVar("IN__INCLUDE_DOWNLOAD_COUNT"), out var doIncludeDownloadCount)) includeDownloadCount = doIncludeDownloadCount;
+            if (bool.TryParse(EnvVar("IN__DEVONLY"), out var doDevOnly)) devOnly = doDevOnly;
+            
+            if (devOnly) Console.WriteLine("We're in DEVELOPERONLY mode.");
 
             var inputFile = "input.json";
             var outputFile = "index.json";
 
-            await new Program(githubToken, inputFile, $"output/{outputFile}", excessiveMode, includeDownloadCount).Run();
+            await new Program(githubToken, inputFile, $"output/{outputFile}", excessiveMode, includeDownloadCount, devOnly).Run();
         }
         catch (Exception e)
         {
@@ -39,10 +44,11 @@ internal class Program
         }
     }
 
-    private Program(string githubToken, string inputFile, string outputFile, bool excessiveMode, bool includeDownloadCount)
+    private Program(string githubToken, string inputFile, string outputFile, bool excessiveMode, bool includeDownloadCount, bool devOnly)
     {
         _inputFile = inputFile;
         _includeDownloadCount = includeDownloadCount;
+        _devOnly = devOnly;
 
         _gatherer = new PLGatherer(githubToken, excessiveMode);
         _outputter = new PLOutputter(outputFile);
@@ -56,12 +62,21 @@ internal class Program
         var input = JsonConvert.DeserializeObject<PLInput>(inputJson);
         
         var outputListing = await _gatherer.DownloadAndAggregate(input);
-        
+
         foreach (var outputListingPackage in outputListing.packages.Values)
         {
+            var totalDownloadCount = outputListingPackage.versions.Values
+                .Select(version => version.downloadCount)
+                .Sum();
+            outputListingPackage.totalDownloadCount = totalDownloadCount;
+            
             foreach (var version in outputListingPackage.versions.Values)
             {
                 var description = version.description ?? version.displayName;
+                if (_devOnly)
+                {
+                    if (_includeDownloadCount) version.displayName = $"{version.displayName} 🔽{version.downloadCount}/{totalDownloadCount}";
+                }
                 version.description = _includeDownloadCount ? $"{description} (Downloaded {version.downloadCount} times)" : description;
             }
         }
