@@ -11,6 +11,9 @@ This workflow repository provides NO GUARANTEES on the stability of any API, as 
 
 You should not use this repository as a workflow action unless you fork it first and use your own fork.
 
+Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listing/blob/main/.github/workflows/build-listing.yml)
+for an example of a repository that uses this.
+
 ## Differences
 
 - By default, we don't download the zip file of the package itself.
