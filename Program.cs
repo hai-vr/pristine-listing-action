@@ -28,7 +28,8 @@ internal class Program
             if (string.IsNullOrWhiteSpace(githubToken)) throw new ArgumentException("IN__GITHUB_TOKEN env var contains nothing");
 
             var inputJson = await File.ReadAllTextAsync("input.json", Encoding.UTF8);
-        
+            
+            Directory.CreateDirectory("output");
             await new Program(githubToken, inputJson, "output/index.json").Run();
         }
         catch (Exception e)
