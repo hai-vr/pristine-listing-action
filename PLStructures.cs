@@ -23,19 +23,25 @@ public class PLPackageVersion
     public string description;
     public Dictionary<string, string> dependencies;
     public Dictionary<string, string> vpmDependencies;
-    public PLAuthor author;
-    public string url;
-    public string documentationUrl;
+    // public List<PLSamples> samples;
     public string changelogUrl;
+    public PLAuthor author;
+    public string documentationUrl;
     public string license;
+    public string vrchatVersion; // VRC-specific
     public string zipSHA256;
-    
-    // VRC-specific
-    public string vrchatVersion;
-    public Dictionary<string, string> legacyFolders;
+    public string url;
+    public Dictionary<string, string> legacyFolders; // VRC-specific
 }
 
 public class PLAuthor
 {
     public string name;
+}
+
+public class PLSample
+{
+    public string displayName;
+    public string description;
+    public string path;
 }
