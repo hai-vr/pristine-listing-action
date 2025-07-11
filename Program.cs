@@ -48,6 +48,8 @@ internal class Program
         _githubToken = githubToken;
         _inputJson = inputJson;
         _http = new HttpClient();
+        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _githubToken);
+        _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
         _outputIndexJson = outputFile;
     }
 
@@ -238,7 +240,7 @@ internal class Program
     {
         Console.WriteLine($"Downloading zip {zipUrl}...");
         
-        var request = NewRequest(zipUrl);
+        var request = new HttpRequestMessage(HttpMethod.Get, zipUrl);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
 
         var response = await _http.SendAsync(request, source.Token);
@@ -261,7 +263,7 @@ internal class Program
     {
         Console.WriteLine($"Downloading packageJson {packageJsonUrl}...");
         
-        var request = NewRequest(packageJsonUrl);
+        var request = new HttpRequestMessage(HttpMethod.Get, packageJsonUrl);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         var response = await _http.SendAsync(request, source.Token);
@@ -294,7 +296,7 @@ internal class Program
         int requested = 100; // Max is 100
         var apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases?per_page={requested}";
 
-        using var request = NewRequest(apiUrl);
+        using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
         
         var response = await _http.SendAsync(request, source.Token);
         if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
@@ -305,14 +307,6 @@ internal class Program
         if (releases.Count == requested) throw new DataException("Pagination not implemented");
         
         return releases;
-    }
-
-    private HttpRequestMessage NewRequest(string url)
-    {
-        var request = new HttpRequestMessage(HttpMethod.Get, url);
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _githubToken);
-        request.Headers.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
-        return request;
     }
 
     private static void ParseRepository(string repository, out string owner, out string repo)
