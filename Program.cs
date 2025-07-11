@@ -223,7 +223,9 @@ internal class Program
 
     private async Task<JArray> FetchReleaseDataUnstructured(string owner, string repo, CancellationTokenSource source)
     {
-        var apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases";
+        // FIXME: Implement proper pagination
+        int requested = 100; // Max is 100
+        var apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases?per_page={requested}";
 
         using var request = NewRequest(apiUrl);
         
@@ -232,6 +234,9 @@ internal class Program
             
         var responseStr = await response.Content.ReadAsStringAsync(source.Token);
         var releases = JArray.Parse(responseStr);
+
+        if (releases.Count == requested) throw new DataException("Pagination not implemented");
+        
         return releases;
     }
 
