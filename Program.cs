@@ -149,44 +149,9 @@ internal class Program
         var zipAsset = releaseUns[ReleaseAsset].First(IsAssetThatZipFile);
         var downloadCount = zipAsset["download_count"].Value<int>();
         var downloadUrl = zipAsset["browser_download_url"].Value<string>();
-        var downloadZip = await DownloadZip(downloadUrl, source);
+        var intermediary = await DownloadZip(downloadUrl, source);
 
-        var package = JObject.Parse(downloadZip.packageJson);
-        
-        var authorToken = package["author"];
-        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-        var authorName = authorToken.Type switch
-        {
-            JTokenType.Object => authorToken.Value<JObject>()[PackageJsonAuthorName].Value<string>(),
-            JTokenType.String => authorToken.Value<string>(),
-            _  => throw new DataException("Can't deserialize author from package.json")
-        };
-
-        var displayName = package["displayName"].Value<string>();
-        var description = package["description"]?.Value<string>() ?? displayName;
-
-        return new PLPackageVersion
-        {
-            name = package[PackageName].Value<string>(),
-            displayName = displayName,
-            version = package["version"].Value<string>(), // Was formerly: (string)releaseUns[ReleaseTagName]
-            unity = package["unity"]?.Value<string>(),
-            description = $"{description} (Downloaded {downloadCount} times)",
-            dependencies = AsDictionary(package["dependencies"]?.Value<JObject>()),
-            vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>()),
-            author = new PLAuthor
-            {
-                name = authorName
-            },
-            url = downloadUrl,
-            documentationUrl = package["documentationUrl"]?.Value<string>(),
-            changelogUrl = package["changelogUrl"]?.Value<string>(),
-            license = package["license"]?.Value<string>(),
-            zipSHA256 = downloadZip.hashHexNullableIfJson,
-            
-            vrchatVersion = package["vrchatVersion"]?.Value<string>(),
-            legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
-        };
+        return ToPackage(intermediary, downloadCount, downloadUrl);
     }
 
     private async Task<PLPackageVersion> LighterMode(CancellationTokenSource source, JToken releaseUns)
@@ -197,18 +162,14 @@ internal class Program
 
         var packageJsonAsset = releaseUns[ReleaseAsset].First(IsAssetThatPackageJsonFile);
         var packageJsonUrl = packageJsonAsset["browser_download_url"].Value<string>();
-        var packageJson = (await DownloadPackageJson(packageJsonUrl, source)).packageJson;
+        var intermediary = await DownloadPackageJson(packageJsonUrl, source);
 
-        var package = JObject.Parse(packageJson);
-        
-        var authorToken = package["author"];
-        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-        var authorName = authorToken.Type switch
-        {
-            JTokenType.Object => authorToken.Value<JObject>()[PackageJsonAuthorName].Value<string>(),
-            JTokenType.String => authorToken.Value<string>(),
-            _  => throw new DataException("Can't deserialize author from package.json")
-        };
+        return ToPackage(intermediary, downloadCount, downloadUrl);
+    }
+
+    private PLPackageVersion ToPackage(PLIntermediary intermediary, int downloadCount, string downloadUrl)
+    {
+        var package = JObject.Parse(intermediary.packageJson);
 
         var displayName = package["displayName"].Value<string>();
         var description = package["description"]?.Value<string>() ?? displayName;
@@ -224,17 +185,30 @@ internal class Program
             vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>()),
             author = new PLAuthor
             {
-                name = authorName
+                name = ExtractAuthorName(package)
             },
             url = downloadUrl,
             documentationUrl = package["documentationUrl"]?.Value<string>(),
             changelogUrl = package["changelogUrl"]?.Value<string>(),
             license = package["license"]?.Value<string>(),
-            zipSHA256 = null,
+            zipSHA256 = intermediary.hashHexNullableIfJson,
             
             vrchatVersion = package["vrchatVersion"]?.Value<string>(),
             legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
         };
+    }
+
+    private static string ExtractAuthorName(JObject package)
+    {
+        var authorToken = package["author"];
+        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
+        var authorName = authorToken.Type switch
+        {
+            JTokenType.Object => authorToken.Value<JObject>()[PackageJsonAuthorName].Value<string>(),
+            JTokenType.String => authorToken.Value<string>(),
+            _  => throw new DataException("Can't deserialize author from package.json")
+        };
+        return authorName;
     }
 
     private Dictionary<string, string> AsDictionary(JObject obj)
