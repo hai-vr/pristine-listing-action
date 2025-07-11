@@ -17,11 +17,11 @@ internal class Program
     private const string PackageJsonAuthorName = "name";
     private const string PackageName = "name";
     private const string HiddenBodyTag = @"$\texttt{Hidden}$";
+    private const string PackageJsonFilename = "package.json";
 
     private readonly string _inputJson;
     private readonly string _outputIndexJson;
     private readonly HttpClient _http;
-    private readonly string _githubToken;
 
     public static async Task Main(string[] args)
     {
@@ -30,10 +30,13 @@ internal class Program
             var githubToken = Environment.GetEnvironmentVariable("IN__GITHUB_TOKEN");
             if (string.IsNullOrWhiteSpace(githubToken)) throw new ArgumentException("IN__GITHUB_TOKEN env var contains nothing");
 
-            var inputJson = await File.ReadAllTextAsync("input.json", Encoding.UTF8);
+            var inputFile = "input.json";
+            var outputFile = "index.json";
+            
+            var inputJson = await File.ReadAllTextAsync(inputFile, Encoding.UTF8);
             
             Directory.CreateDirectory("output");
-            await new Program(githubToken, inputJson, "output/index.json").Run();
+            await new Program(githubToken, inputJson, $"output/{outputFile}").Run();
         }
         catch (Exception e)
         {
@@ -45,10 +48,9 @@ internal class Program
 
     private Program(string githubToken, string inputJson, string outputFile)
     {
-        _githubToken = githubToken;
         _inputJson = inputJson;
         _http = new HttpClient();
-        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _githubToken);
+        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
         _outputIndexJson = outputFile;
     }
@@ -85,7 +87,7 @@ internal class Program
         };
     }
 
-    private async Task<PLPackage[]> AsPackages(List<PLProducts> products)
+    private async Task<PLPackage[]> AsPackages(List<PLProduct> products)
     {
         var cts = new CancellationTokenSource();
         try
@@ -120,9 +122,9 @@ internal class Program
             };
 
             var relevantPackages = releasesUns
-                .Where(releaseUns => releaseUns[ReleaseAsset] != null)
-                .Where(releaseUns => releaseUns[ReleaseAsset].Any(asset => asset[AssetName].Value<string>() == "package.json"))
-                .Where(releaseUns => releaseUns["body"] == null || !releaseUns["body"].Value<string>().Contains(HiddenBodyTag))
+                .Where(ThereAreAssets)
+                .Where(AtLeastOneOfTheAssetsIsPackageJson)
+                .Where(IfThereIsABodyThenItDoesNotContainTheHiddenTag)
                 .ToList();
 
             var packageVersions = await Task.WhenAll(relevantPackages.Select(releaseUns => CompilePackage(source, releaseUns)));
@@ -138,6 +140,21 @@ internal class Program
             await source.CancelAsync();
             throw;
         }
+    }
+
+    private static bool ThereAreAssets(JToken releaseUns)
+    {
+        return releaseUns[ReleaseAsset] != null;
+    }
+
+    private static bool AtLeastOneOfTheAssetsIsPackageJson(JToken releaseUns)
+    {
+        return releaseUns[ReleaseAsset].Any(asset => asset[AssetName].Value<string>() == PackageJsonFilename);
+    }
+
+    private static bool IfThereIsABodyThenItDoesNotContainTheHiddenTag(JToken releaseUns)
+    {
+        return releaseUns["body"] == null || !releaseUns["body"].Value<string>().Contains(HiddenBodyTag);
     }
 
     private async Task<PLPackageVersion> CompilePackage(CancellationTokenSource source, JToken releaseUns)
@@ -236,7 +253,7 @@ internal class Program
 
     private static bool IsAssetThatPackageJsonFile(JToken assetUns)
     {
-        return assetUns["content_type"].Value<string>() == "application/json" && assetUns[AssetName].Value<string>().ToLowerInvariant() == "package.json";
+        return assetUns["content_type"].Value<string>() == "application/json" && assetUns[AssetName].Value<string>().ToLowerInvariant() == PackageJsonFilename;
     }
 
     private async Task<PLIntermediary> DownloadZip(string zipUrl, CancellationTokenSource source)
@@ -286,30 +303,81 @@ internal class Program
         using var stream = new MemoryStream(data);
         using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
 
-        var entry = archive.GetEntry("package.json");
+        var entry = archive.GetEntry(PackageJsonFilename);
         if (entry == null) throw new FileNotFoundException("Missing package.json from .zip. We should not unzip in the first place if it wasn't a package to begin with.");
 
         using var reader = new StreamReader(entry.Open(), Encoding.UTF8);
         return reader.ReadToEnd();
     }
 
-    private async Task<JArray> FetchReleaseDataUnstructured(string owner, string repo, CancellationTokenSource source)
+    private async Task<List<JToken>> FetchReleaseDataUnstructured(string owner, string repo, CancellationTokenSource source)
     {
-        // FIXME: Implement proper pagination
-        int requested = 100; // Max is 100
+        var releasesUns = new List<JToken>();
+        
+        int requested = 30; // Max is 100
         var apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases?per_page={requested}";
 
-        using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
-        
-        var response = await _http.SendAsync(request, source.Token);
-        if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
-            
-        var responseStr = await response.Content.ReadAsStringAsync(source.Token);
-        var releases = JArray.Parse(responseStr);
+        var iteration = 0;
+        bool hasNext;
+        do
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
+            Console.WriteLine($"Getting release data at {apiUrl}... (iteration #{iteration})");
 
-        if (releases.Count == requested) throw new DataException("Pagination not implemented");
+            var response = await _http.SendAsync(request, source.Token);
+            if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
+
+            var responseStr = await response.Content.ReadAsStringAsync(source.Token);
+            var releases = JArray.Parse(responseStr);
+
+            foreach (var releaseUns in releases)
+            {
+                releasesUns.Add(releaseUns);
+            }
+
+            if (response.Headers.TryGetValues("Link", out var linkValues))
+            {
+                var linkHeader = linkValues.First();
+                hasNext = TryParseNextLink(linkHeader, out apiUrl);
+            }
+            else
+            {
+                hasNext = false;
+            }
+
+            iteration++;
+
+        } while (hasNext);
         
-        return releases;
+        return releasesUns;
+    }
+
+    private bool TryParseNextLink(string linkHeader, out string result)
+    {
+        if (string.IsNullOrEmpty(linkHeader))
+        {
+            result = null;
+            return false;
+        }
+
+        var lines = linkHeader.Split(',');
+        foreach (var line in lines)
+        {
+            var parts = line.Split(';');
+            if (parts.Length < 2) continue;
+
+            var url = parts[0].Trim().Trim('<', '>');
+            var rel = parts[1].Trim();
+
+            if (rel == "rel=\"next\"")
+            {
+                result = url;
+                return true;
+            }
+        }
+
+        result = null;
+        return false;
     }
 
     private static void ParseRepository(string repository, out string owner, out string repo)

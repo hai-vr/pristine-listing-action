@@ -3,7 +3,7 @@
 public class PLInput
 {
     public PLInputListingData listingData;
-    public List<PLProducts> products;
+    public List<PLProduct> products;
 }
 
 public class PLInputListingData
@@ -14,7 +14,7 @@ public class PLInputListingData
     public string id;
 }
 
-public class PLProducts
+public class PLProduct
 {
     public string repository;
 }

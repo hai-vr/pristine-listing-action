@@ -11,12 +11,15 @@ This workflow repository provides NO GUARANTEES on the stability of any API, as 
 
 You should not use this repository as a workflow action unless you fork it first and use your own fork.
 
-## Not implemented yet
+## Differences
 
-- When querying GitHub releases, pagination is not implemented, so if a repository has more than 100 releases,
-  the workflow action will fail.
+- We don't download the zip file of the package itself.
+  - The contents of the `package.json` file is read from the assets of the release.
+  - Similarly to [bdunderscore/vpm-repo-list-generator](https://github.com/bdunderscore/vpm-repo-list-generator)
+    we don't calculate the `zipSHA256` by default; however the code to do this is implemented.
+- If the body of GitHub release notes contains the substring `@"$\texttt{Hidden}$"` then that release is ignored.
 - Information about `"samples"` in the package.json is not exposed to the repository listing.
-- Caching is not implemented, so this will cause all packages to be downloaded every time this action is run.
+- Caching is not implemented, so this will cause all `package.json` to be downloaded every time this action is run.
 
 ## Non-goals
 
