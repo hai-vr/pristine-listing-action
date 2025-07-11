@@ -17,19 +17,19 @@ jobs:
       id-token: write
 
     steps:
+    - name: Checkout caller repository
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ github.repository }}
+        ref: ${{ github.ref }}
+        
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
         repository: hai-vr/pristine-listing-action
         ref: main
         path: ${{ env.subfolder }}
-
-#    - name: Checkout caller repository
-#      uses: actions/checkout@v4
-#      with:
-#        repository: ${{ github.repository }}
-#        ref: ${{ github.ref }}
-#        clean: false
+        clean: false
 
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
