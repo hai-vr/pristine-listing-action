@@ -12,7 +12,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="input.json">
+      <None Update="input.example.json">
         <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       </None>
     </ItemGroup>
