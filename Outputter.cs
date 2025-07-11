@@ -35,6 +35,13 @@ internal class PLOutputter
         var sw = new StringWriter();
         sw.WriteLine($"# {outputListing.id}");
         sw.WriteLine("");
+        sw.WriteLine("This repository listing was generated using [hai-vr/pristine-listing-action](https://github.com/hai-vr/pristine-listing-action/).");
+        sw.WriteLine("");
+        sw.WriteLine($"- id: {outputListing.id}");
+        sw.WriteLine($"- name: {outputListing.name}");
+        sw.WriteLine($"- author: {outputListing.author}");
+        sw.WriteLine($"- url: {outputListing.url}");
+        sw.WriteLine("");
         foreach (var package in outputListing.packages)
         {
             var versions = package.Value.versions;
