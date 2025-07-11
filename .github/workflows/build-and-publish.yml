@@ -22,13 +22,13 @@ jobs:
       with:
         repository: hai-vr/pristine-listing-action
         ref: main
+        path: ${{ env.subfolder }}
 
     - name: Checkout caller repository
       uses: actions/checkout@v4
       with:
         repository: ${{ github.repository }}
         ref: ${{ github.ref }}
-        path: ${{ env.subfolder }}
         clean: 'false'
 
     - name: Setup .NET
