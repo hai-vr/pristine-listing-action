@@ -67,12 +67,62 @@ internal class Program
             .Where(package => package.versions.Count > 0)
             .ToDictionary(package => package.versions.First().Value.name);
 
+        await Task.WhenAll(new[] { CreateListing(outputListing), CreateWebpage(outputListing) });
+    }
+
+    private async Task CreateListing(PLOutputListing outputListing)
+    {
         var outputJson = JsonConvert.SerializeObject(outputListing, Formatting.Indented, new JsonSerializerSettings
         {
             NullValueHandling = NullValueHandling.Ignore
         });
 
         await File.WriteAllTextAsync(_outputIndexJson, outputJson, Encoding.UTF8);
+    }
+
+    private async Task CreateWebpage(PLOutputListing outputListing)
+    {
+        var sw = new StringWriter();
+        sw.WriteLine($"# {outputListing.id}");
+        sw.WriteLine("");
+        foreach (var package in outputListing.packages)
+        {
+            var versions = package.Value.versions;
+            sw.WriteLine($"## {package.Key}");
+            sw.WriteLine("");
+
+            var firstVersion = versions.Values.First();
+            sw.WriteLine($"- displayName: {firstVersion.displayName}");
+            sw.WriteLine($"- description: {firstVersion.description}");
+            if (firstVersion.changelogUrl != null) sw.WriteLine($"- changelogUrl: {firstVersion.changelogUrl}");
+            if (firstVersion.documentationUrl != null) sw.WriteLine($"- documentationUrl: {firstVersion.documentationUrl}");
+            if (firstVersion.unity != null) sw.WriteLine($"- unity: {firstVersion.unity}");
+            if (firstVersion.vrchatVersion != null) sw.WriteLine($"- vrchatVersion: {firstVersion.vrchatVersion}");
+            if (firstVersion.dependencies != null && firstVersion.dependencies.Count > 0)
+            {
+                sw.WriteLine("- dependencies:");
+                foreach (var dep in firstVersion.dependencies)
+                {
+                    sw.WriteLine($"  - {dep.Key} : {dep.Value}");
+                }
+            }
+            if (firstVersion.vpmDependencies != null && firstVersion.vpmDependencies.Count > 0)
+            {
+                sw.WriteLine("- vpmDependencies:");
+                foreach (var dep in firstVersion.vpmDependencies)
+                {
+                    sw.WriteLine($"  - {dep.Key} : {dep.Value}");
+                }
+            }
+            sw.WriteLine($"- versions:");
+            foreach (var version in versions.Values)
+            {
+                sw.WriteLine($"  - {version.version}");
+            }
+            sw.WriteLine("");
+        }
+        
+        await File.WriteAllTextAsync("output/index.html", sw.ToString(), Encoding.UTF8);
     }
 
     private static PLOutputListing NewOutputListing(PLInputListingData listingData)
