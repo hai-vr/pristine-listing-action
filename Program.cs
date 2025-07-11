@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -11,23 +12,16 @@ namespace Hai.PristineListing;
 
 internal class Program
 {
-    private const string ReleaseAsset = "assets";
-    private const string AssetName = "name";
-    private const string PackageJsonAuthorName = "name";
-    private const string PackageName = "name";
-    private const string HiddenBodyTag = @"$\texttt{Hidden}$";
-    private const string PackageJsonFilename = "package.json";
-
     private readonly string _inputJson;
     private readonly string _outputIndexJson;
-    private readonly bool _excessiveMode;
-    private readonly HttpClient _http;
     private readonly bool _includeDownloadCount;
+    
+    private readonly PLGatherer _gatherer;
 
     public static async Task Main(string[] args)
     {
         string EnvVar(string var) => Environment.GetEnvironmentVariable(var);
-        
+
         try
         {
             var githubToken = EnvVar("IN__GITHUB_TOKEN");
@@ -35,15 +29,15 @@ internal class Program
 
             var excessiveMode = false;
             var includeDownloadCount = false;
-            
+
             if (bool.TryParse(EnvVar("IN__EXCESSIVE_MODE"), out var doExcessiveMode)) excessiveMode = doExcessiveMode;
             if (bool.TryParse(EnvVar("IN__INCLUDE_DOWNLOAD_COUNT"), out var doIncludeDownloadCount)) includeDownloadCount = doIncludeDownloadCount;
 
             var inputFile = "input.json";
             var outputFile = "index.json";
-            
+
             var inputJson = await File.ReadAllTextAsync(inputFile, Encoding.UTF8);
-            
+
             Directory.CreateDirectory("output");
             await new Program(githubToken, inputJson, $"output/{outputFile}", excessiveMode, includeDownloadCount).Run();
         }
@@ -58,29 +52,30 @@ internal class Program
     private Program(string githubToken, string inputJson, string outputFile, bool excessiveMode, bool includeDownloadCount)
     {
         _inputJson = inputJson;
-        _http = new HttpClient();
-        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
-        _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
         _outputIndexJson = outputFile;
-        _excessiveMode = excessiveMode;
         _includeDownloadCount = includeDownloadCount;
+
+        _gatherer = new PLGatherer(githubToken, excessiveMode);
     }
 
     private async Task Run()
     {
         var input = JsonConvert.DeserializeObject<PLInput>(_inputJson);
-        var listingData = input.listingData;
-
-        var outputListing = NewOutputListing(listingData);
-
-        var packages = await AsPackages(input.products);
-        outputListing.packages = packages
-            .Where(package => package.versions.Count > 0)
-            .ToDictionary(package => package.versions.First().Value.name);
+        
+        var outputListing = await _gatherer.DownloadAndAggregate(input);
+        
+        foreach (var outputListingPackage in outputListing.packages.Values)
+        {
+            foreach (var version in outputListingPackage.versions.Values)
+            {
+                var description = version.description ?? version.displayName;
+                version.description = _includeDownloadCount ? $"{description} (Downloaded {version.downloadCount} times)" : description;
+            }
+        }
 
         await Task.WhenAll(new[] { CreateListing(outputListing), CreateWebpage(outputListing) });
     }
-
+    
     private async Task CreateListing(PLOutputListing outputListing)
     {
         var outputJson = JsonConvert.SerializeObject(outputListing, Formatting.Indented, new JsonSerializerSettings
@@ -91,6 +86,7 @@ internal class Program
         await File.WriteAllTextAsync(_outputIndexJson, outputJson, Encoding.UTF8);
     }
 
+    [SuppressMessage("ReSharper", "MethodHasAsyncOverload")]
     private async Task CreateWebpage(PLOutputListing outputListing)
     {
         var sw = new StringWriter();
@@ -138,6 +134,39 @@ internal class Program
         var html = Markdown.ToHtml(markdown);
         await File.WriteAllTextAsync("output/list.md", markdown, Encoding.UTF8);
         await File.WriteAllTextAsync("output/index.html", html, Encoding.UTF8);
+    }
+}
+
+internal class PLGatherer
+{
+    private const string ReleaseAsset = "assets";
+    private const string AssetName = "name";
+    private const string PackageJsonAuthorName = "name";
+    private const string PackageName = "name";
+    private const string HiddenBodyTag = @"$\texttt{Hidden}$";
+    private const string PackageJsonFilename = "package.json";
+    
+    private readonly HttpClient _http;
+    private readonly bool _excessiveMode;
+
+    internal PLGatherer(string githubToken, bool excessiveMode)
+    {
+        _http = new HttpClient();
+        _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
+        _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
+        _excessiveMode = excessiveMode;
+    }
+
+    internal async Task<PLOutputListing> DownloadAndAggregate(PLInput input)
+    {
+        var outputListing = NewOutputListing(input.listingData);
+
+        var packages = await AsPackages(input.products);
+        outputListing.packages = packages
+            .Where(package => package.versions.Count > 0)
+            .ToDictionary(package => package.versions.First().Value.name);
+
+        return outputListing;
     }
 
     private static PLOutputListing NewOutputListing(PLInputListingData listingData)
@@ -258,16 +287,13 @@ internal class Program
     {
         var package = JObject.Parse(intermediary.packageJson);
 
-        var displayName = package["displayName"].Value<string>();
-        var description = package["description"]?.Value<string>() ?? displayName;
-
         return new PLPackageVersion
         {
             name = package[PackageName].Value<string>(),
-            displayName = displayName,
+            displayName = package["displayName"].Value<string>(),
             version = package["version"].Value<string>(), // Was formerly: (string)releaseUns[ReleaseTagName]
             unity = package["unity"]?.Value<string>(),
-            description = _includeDownloadCount ? $"{description} (Downloaded {downloadCount} times)" : description,
+            description = package["description"]?.Value<string>(),
             dependencies = AsDictionary(package["dependencies"]?.Value<JObject>()),
             vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>()),
             author = new PLAuthor
