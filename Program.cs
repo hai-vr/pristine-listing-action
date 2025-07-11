@@ -16,6 +16,7 @@ internal class Program
     private const string AssetName = "name";
     private const string PackageJsonAuthorName = "name";
     private const string PackageName = "name";
+    private const string HiddenBodyTag = @"$\texttt{Hidden}$";
 
     private readonly string _inputJson;
     private readonly string _outputIndexJson;
@@ -119,6 +120,7 @@ internal class Program
             var relevantPackages = releasesUns
                 .Where(releaseUns => releaseUns[ReleaseAsset] != null)
                 .Where(releaseUns => releaseUns[ReleaseAsset].Any(asset => asset[AssetName].Value<string>() == "package.json"))
+                .Where(releaseUns => releaseUns["body"] == null || !releaseUns["body"].Value<string>().Contains(HiddenBodyTag))
                 .ToList();
 
             var packageVersions = await Task.WhenAll(relevantPackages.Select(releaseUns => CompilePackage(source, releaseUns)));
