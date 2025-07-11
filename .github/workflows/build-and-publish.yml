@@ -3,7 +3,7 @@ name: Build and Publish
 on: 
   workflow_call:
     secrets:
-      GITHUB_TOKEN:
+      gh_token:
         required: true
 
 jobs:
@@ -33,7 +33,7 @@ jobs:
 
     - name: Run project
       env:
-        IN__GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        IN__GITHUB_TOKEN: ${{ secrets.gh_token }}
       run: dotnet run --project pristine-listing-action.csproj
 
     ## From https://github.com/actions/upload-pages-artifact (MIT)
