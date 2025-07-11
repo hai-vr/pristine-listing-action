@@ -2,6 +2,6 @@
 
 public class PLIntermediary
 {
-    public string hashHex;
+    public string hashHexNullableIfJson;
     public string packageJson;
 }

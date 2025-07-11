@@ -10,6 +10,8 @@ namespace Hai.PristineListing;
 
 internal class Program
 {
+    private const bool UseExcessiveMode = false;
+    
     private const string ReleaseAsset = "assets";
     private const string AssetName = "name";
     private const string PackageJsonAuthorName = "name";
@@ -119,7 +121,7 @@ internal class Program
                 .Where(releaseUns => releaseUns[ReleaseAsset].Any(asset => asset[AssetName].Value<string>() == "package.json"))
                 .ToList();
 
-            var packageVersions = await Task.WhenAll(relevantPackages.Select(releaseUns => DownloadAndCompilePackage(source, releaseUns)));
+            var packageVersions = await Task.WhenAll(relevantPackages.Select(releaseUns => CompilePackage(source, releaseUns)));
             foreach (var packageVersion in packageVersions)
             {
                 package.versions.Add(packageVersion.version, packageVersion);
@@ -134,7 +136,13 @@ internal class Program
         }
     }
 
-    private async Task<PLPackageVersion> DownloadAndCompilePackage(CancellationTokenSource source, JToken releaseUns)
+    private async Task<PLPackageVersion> CompilePackage(CancellationTokenSource source, JToken releaseUns)
+    {
+        if (UseExcessiveMode) return await ExcessiveMode(source, releaseUns);
+        else return await LighterMode(source, releaseUns);
+    }
+
+    private async Task<PLPackageVersion> ExcessiveMode(CancellationTokenSource source, JToken releaseUns)
     {
         var zipAsset = releaseUns[ReleaseAsset].First(IsAssetThatZipFile);
         var downloadCount = zipAsset["download_count"].Value<int>();
@@ -172,7 +180,55 @@ internal class Program
             documentationUrl = package["documentationUrl"]?.Value<string>(),
             changelogUrl = package["changelogUrl"]?.Value<string>(),
             license = package["license"]?.Value<string>(),
-            zipSHA256 = downloadZip.hashHex,
+            zipSHA256 = downloadZip.hashHexNullableIfJson,
+            
+            vrchatVersion = package["vrchatVersion"]?.Value<string>(),
+            legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
+        };
+    }
+
+    private async Task<PLPackageVersion> LighterMode(CancellationTokenSource source, JToken releaseUns)
+    {
+        var zipAsset = releaseUns[ReleaseAsset].First(IsAssetThatZipFile);
+        var downloadCount = zipAsset["download_count"].Value<int>();
+        var downloadUrl = zipAsset["browser_download_url"].Value<string>();
+
+        var packageJsonAsset = releaseUns[ReleaseAsset].First(IsAssetThatPackageJsonFile);
+        var packageJsonUrl = packageJsonAsset["browser_download_url"].Value<string>();
+        var packageJson = (await DownloadPackageJson(packageJsonUrl, source)).packageJson;
+
+        var package = JObject.Parse(packageJson);
+        
+        var authorToken = package["author"];
+        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
+        var authorName = authorToken.Type switch
+        {
+            JTokenType.Object => authorToken.Value<JObject>()[PackageJsonAuthorName].Value<string>(),
+            JTokenType.String => authorToken.Value<string>(),
+            _  => throw new DataException("Can't deserialize author from package.json")
+        };
+
+        var displayName = package["displayName"].Value<string>();
+        var description = package["description"]?.Value<string>() ?? displayName;
+
+        return new PLPackageVersion
+        {
+            name = package[PackageName].Value<string>(),
+            displayName = displayName,
+            version = package["version"].Value<string>(), // Was formerly: (string)releaseUns[ReleaseTagName]
+            unity = package["unity"]?.Value<string>(),
+            description = $"{description} (Downloaded {downloadCount} times)",
+            dependencies = AsDictionary(package["dependencies"]?.Value<JObject>()),
+            vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>()),
+            author = new PLAuthor
+            {
+                name = authorName
+            },
+            url = downloadUrl,
+            documentationUrl = package["documentationUrl"]?.Value<string>(),
+            changelogUrl = package["changelogUrl"]?.Value<string>(),
+            license = package["license"]?.Value<string>(),
+            zipSHA256 = null,
             
             vrchatVersion = package["vrchatVersion"]?.Value<string>(),
             legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
@@ -197,6 +253,11 @@ internal class Program
         return assetUns["content_type"].Value<string>() == "application/zip" && assetUns[AssetName].Value<string>().ToLowerInvariant().EndsWith(".zip");
     }
 
+    private static bool IsAssetThatPackageJsonFile(JToken assetUns)
+    {
+        return assetUns["content_type"].Value<string>() == "application/json" && assetUns[AssetName].Value<string>().ToLowerInvariant() == "package.json";
+    }
+
     private async Task<PLIntermediary> DownloadZip(string zipUrl, CancellationTokenSource source)
     {
         Console.WriteLine($"Downloading zip {zipUrl}...");
@@ -215,7 +276,26 @@ internal class Program
         var packageJson = Unzip(data);
         return new PLIntermediary
         {
-            hashHex = hashHex,
+            hashHexNullableIfJson = hashHex,
+            packageJson = packageJson
+        };
+    }
+
+    private async Task<PLIntermediary> DownloadPackageJson(string packageJsonUrl, CancellationTokenSource source)
+    {
+        Console.WriteLine($"Downloading packageJson {packageJsonUrl}...");
+        
+        var request = NewRequest(packageJsonUrl);
+        request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+        var response = await _http.SendAsync(request, source.Token);
+        if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
+
+        var packageJson = await response.Content.ReadAsStringAsync();
+
+        return new PLIntermediary
+        {
+            hashHexNullableIfJson = null,
             packageJson = packageJson
         };
     }
