@@ -142,7 +142,10 @@ internal class Program
 
     private async Task<PLPackageVersion> CompilePackage(CancellationTokenSource source, JToken releaseUns)
     {
+        // This will download the ZIP file of the release, in order to calculate "zipSHA256". This isn't really used.
         if (UseExcessiveMode) return await ExcessiveMode(source, releaseUns);
+        
+        // This will download the package.json asset of the release. The "zipSHA256" value won't be able to be calculated.
         else return await LighterMode(source, releaseUns);
     }
 
