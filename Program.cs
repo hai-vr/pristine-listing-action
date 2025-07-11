@@ -22,12 +22,21 @@ internal class Program
 
     public static async Task Main(string[] args)
     {
-        var githubToken = Environment.GetEnvironmentVariable("IN__GITHUB_TOKEN");
-        if (string.IsNullOrWhiteSpace(githubToken)) throw new ArgumentException("IN__GITHUB_TOKEN env var contains nothing");
+        try
+        {
+            var githubToken = Environment.GetEnvironmentVariable("IN__GITHUB_TOKEN");
+            if (string.IsNullOrWhiteSpace(githubToken)) throw new ArgumentException("IN__GITHUB_TOKEN env var contains nothing");
 
-        var inputJson = await File.ReadAllTextAsync("input.json", Encoding.UTF8);
+            var inputJson = await File.ReadAllTextAsync("input.json", Encoding.UTF8);
         
-        await new Program(githubToken, inputJson, "output/index.json").Run();
+            await new Program(githubToken, inputJson, "output/index.json").Run();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine($"Error occurred: {e.Message}");
+            Console.WriteLine(e);
+            throw;
+        }
     }
 
     private Program(string githubToken, string inputJson, string outputFile)
