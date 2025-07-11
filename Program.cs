@@ -11,8 +11,6 @@ namespace Hai.PristineListing;
 
 internal class Program
 {
-    private const bool UseExcessiveMode = false;
-    
     private const string ReleaseAsset = "assets";
     private const string AssetName = "name";
     private const string PackageJsonAuthorName = "name";
@@ -22,14 +20,24 @@ internal class Program
 
     private readonly string _inputJson;
     private readonly string _outputIndexJson;
+    private readonly bool _excessiveMode;
     private readonly HttpClient _http;
+    private readonly bool _includeDownloadCount;
 
     public static async Task Main(string[] args)
     {
+        string EnvVar(string var) => Environment.GetEnvironmentVariable(var);
+        
         try
         {
-            var githubToken = Environment.GetEnvironmentVariable("IN__GITHUB_TOKEN");
+            var githubToken = EnvVar("IN__GITHUB_TOKEN");
             if (string.IsNullOrWhiteSpace(githubToken)) throw new ArgumentException("IN__GITHUB_TOKEN env var contains nothing");
+
+            var excessiveMode = false;
+            var includeDownloadCount = false;
+            
+            if (bool.TryParse(EnvVar("IN__EXCESSIVE_MODE"), out var doExcessiveMode)) excessiveMode = doExcessiveMode;
+            if (bool.TryParse(EnvVar("IN__INCLUDE_DOWNLOAD_COUNT"), out var doIncludeDownloadCount)) includeDownloadCount = doIncludeDownloadCount;
 
             var inputFile = "input.json";
             var outputFile = "index.json";
@@ -37,7 +45,7 @@ internal class Program
             var inputJson = await File.ReadAllTextAsync(inputFile, Encoding.UTF8);
             
             Directory.CreateDirectory("output");
-            await new Program(githubToken, inputJson, $"output/{outputFile}").Run();
+            await new Program(githubToken, inputJson, $"output/{outputFile}", excessiveMode, includeDownloadCount).Run();
         }
         catch (Exception e)
         {
@@ -47,13 +55,15 @@ internal class Program
         }
     }
 
-    private Program(string githubToken, string inputJson, string outputFile)
+    private Program(string githubToken, string inputJson, string outputFile, bool excessiveMode, bool includeDownloadCount)
     {
         _inputJson = inputJson;
         _http = new HttpClient();
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
         _outputIndexJson = outputFile;
+        _excessiveMode = excessiveMode;
+        _includeDownloadCount = includeDownloadCount;
     }
 
     private async Task Run()
@@ -215,7 +225,7 @@ internal class Program
     private async Task<PLPackageVersion> CompilePackage(CancellationTokenSource source, JToken releaseUns)
     {
         // This will download the ZIP file of the release, in order to calculate "zipSHA256". This isn't really used.
-        if (UseExcessiveMode) return await ExcessiveMode(source, releaseUns);
+        if (_excessiveMode) return await ExcessiveMode(source, releaseUns);
         
         // This will download the package.json asset of the release. The "zipSHA256" value won't be able to be calculated.
         else return await LighterMode(source, releaseUns);
@@ -257,7 +267,7 @@ internal class Program
             displayName = displayName,
             version = package["version"].Value<string>(), // Was formerly: (string)releaseUns[ReleaseTagName]
             unity = package["unity"]?.Value<string>(),
-            description = $"{description} (Downloaded {downloadCount} times)",
+            description = _includeDownloadCount ? $"{description} (Downloaded {downloadCount} times)" : description,
             dependencies = AsDictionary(package["dependencies"]?.Value<JObject>()),
             vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>()),
             author = new PLAuthor

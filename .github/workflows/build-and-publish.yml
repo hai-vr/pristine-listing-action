@@ -5,6 +5,17 @@ on:
     secrets:
       gh_token:
         required: true
+    inputs:
+      excessiveMode:
+        description: 'If true, this will download the ZIP of every releases to calculate the zipSha256 hash, which is unnecessary'
+        default: false
+        required: false
+        type: boolean
+      includeDownloadCount:
+        description: 'If true, this will append the number of downloads of the package to the package description'
+        default: false
+        required: false
+        type: boolean
 
 env:
   subfolder: subf
@@ -42,6 +53,8 @@ jobs:
     - name: Run project
       env:
         IN__GITHUB_TOKEN: ${{ secrets.gh_token }}
+        IN__EXCESSIVE_MODE: ${{ inputs.excessiveMode }}
+        IN__INCLUDE_DOWNLOAD_COUNT: ${{ inputs.includeDownloadCount }}
       run: dotnet run --project ${{ env.subfolder }}/pristine-listing-action.csproj
 
     ## From https://github.com/actions/upload-pages-artifact (MIT)
