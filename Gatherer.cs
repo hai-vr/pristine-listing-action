@@ -341,7 +341,7 @@ internal class PLGatherer
     {
         var releasesUns = new List<JToken>();
         
-        int requested = 30; // Max is 100
+        int requested = 100; // Max is 100
         var apiUrl = $"https://api.github.com/repos/{owner}/{repo}/releases?per_page={requested}";
 
         var iteration = 0;
