@@ -11,9 +11,6 @@ This workflow repository provides NO GUARANTEES on the stability of any API, as 
 
 You should not use this repository as a workflow action unless you fork it first and use your own fork.
 
-Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listing/blob/main/.github/workflows/build-listing.yml)
-for an example of a repository that uses this.
-
 ### Example
 
 Repositories are defined in the `input.json` file.
@@ -39,9 +36,11 @@ The following [workflow call inputs](https://docs.github.com/en/actions/referenc
     we don't calculate the `zipSHA256` by default; however the code to do this is implemented.
 - Information about `"samples"` in the package.json is not exposed to the repository listing.
 - The listing correctly aggregates [UPM package manifests that define the `author` field as `string`](https://docs.unity3d.com/Manual/upm-manifestPkg.html#:~:text=author,Object%20or%20string).
-- Selectively excluding packages:
-  - If the body of GitHub release notes contains the substring `$\texttt{Hidden}$` then that release is ignored.
-  - If a given product in `input.json` has `includePrereleases` set to false, then pre-releases will not be included. 
 - The description is modified with the number of downloads of the last version appended to it, if the workflow input `includeDownloadCount` is set to true.
 - The generated web page is rudimentary and not meant for public browsing.
 - Caching is not implemented, so this will cause all `package.json` to be downloaded every time this action is run.
+
+#### Exclude packages
+
+- If the body of GitHub release notes contains the substring `$\texttt{Hidden}$` then that release is ignored.
+- If a given product in `input.json` has `includePrereleases` set to false, then pre-releases will not be included.
