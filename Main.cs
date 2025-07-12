@@ -66,6 +66,7 @@ internal class Program
         foreach (var product in input.products)
         {
             product.includePrereleases ??= input.settings.defaultIncludePrereleases;
+            product.onlyPackageNames ??= new List<string>();
         }
         
         var outputListing = await _gatherer.DownloadAndAggregate(input);

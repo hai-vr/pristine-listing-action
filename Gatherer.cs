@@ -116,7 +116,10 @@ internal class PLGatherer
                 if (packageVersionFetchResult.success)
                 {
                     var packageVersion = packageVersionFetchResult.version!;
-                    if (product.includePrereleases == true || !IsPrerelease(packageVersion.version))
+                    if (true
+                        && (product.onlyPackageNames.Count == 0 || product.onlyPackageNames.Contains(packageVersion.name))
+                        && (product.includePrereleases == true || !IsPrerelease(packageVersion.version))
+                        )
                     {
                         if (!packageNameToPackage.TryGetValue(packageVersion.name, out var ourPackage))
                         {

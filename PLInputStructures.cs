@@ -30,4 +30,6 @@ public class PLProduct
     public string repository;
     [DefaultValue(null)]
     public bool? includePrereleases;
+
+    public List<string>? onlyPackageNames;
 }
