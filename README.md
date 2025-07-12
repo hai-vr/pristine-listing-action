@@ -40,7 +40,8 @@ The following [workflow call inputs](https://docs.github.com/en/actions/referenc
 - The generated web page is rudimentary and not meant for public browsing.
 - Caching is not implemented, so this will cause all `package.json` to be downloaded every time this action is run.
 
-#### Exclude packages
+#### Include or Exclude packages
 
 - If the body of GitHub release notes contains the substring `$\texttt{Hidden}$` then that release is ignored.
 - If a given product in `input.json` has `includePrereleases` set to false, then pre-releases will not be included.
+- If a given product in `input.json` has `onlyPackageNames` set to a non-empty list of strings, then only package names that match it will be included.
