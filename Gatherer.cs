@@ -85,6 +85,9 @@ internal class PLGatherer
         {
             ParseRepository(product.repository, out var owner, out var repo);
 
+            // TODO: This fetches all the pages before fetching the package.json assets.
+            // On some large repos, this can take a while.
+            // It would be nice to get the package.json assets as soon as we fetch a page.
             var releasesUns = await FetchReleaseDataUnstructured(owner, repo, source);
 
             var relevantReleases = releasesUns
