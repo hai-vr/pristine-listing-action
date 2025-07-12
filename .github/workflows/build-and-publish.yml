@@ -6,11 +6,6 @@ on:
       gh_token:
         required: true
     inputs:
-      excessiveMode:
-        description: 'If true, this will download the ZIP of every releases to calculate the zipSha256 hash, which is unnecessary'
-        default: false
-        required: false
-        type: boolean
       includeDownloadCount:
         description: 'If true, this will append the number of downloads of the package to the package description'
         default: false
@@ -58,7 +53,6 @@ jobs:
     - name: Run project
       env:
         IN__GITHUB_TOKEN: ${{ secrets.gh_token }}
-        IN__EXCESSIVE_MODE: ${{ inputs.excessiveMode }}
         IN__INCLUDE_DOWNLOAD_COUNT: ${{ inputs.includeDownloadCount }}
         IN__DEVONLY: ${{ inputs.devonly }}
       run: dotnet run --project ${{ env.subfolder }}/pristine-listing-action.csproj

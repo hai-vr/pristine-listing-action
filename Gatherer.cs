@@ -20,14 +20,12 @@ internal class PLGatherer
     private const string AssetDownloadCount = "download_count";
 
     private readonly HttpClient _http;
-    private readonly bool _excessiveMode;
 
-    internal PLGatherer(string githubToken, bool excessiveMode)
+    internal PLGatherer(string githubToken)
     {
         _http = new HttpClient();
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
-        _excessiveMode = excessiveMode;
     }
 
     internal async Task<PLOutputListing> DownloadAndAggregate(PLInput input)
@@ -95,8 +93,9 @@ internal class PLGatherer
             var filtered = releasesUns
                 .Where(ThereAreAssets)
                 .Where(AtLeastOneOfTheAssetsIsZipFile);
-            
-            if (!_excessiveMode || !settings.excessiveModeToleratesPackageJsonAssetMissing)
+
+            var canHaveExcessiveMode = product.mode != PLMode.PackageJsonAssetOnly;
+            if (!canHaveExcessiveMode || !settings.excessiveModeToleratesPackageJsonAssetMissing)
                 filtered = filtered.Where(AtLeastOneOfTheAssetsIsPackageJson);
             
             var relevantReleases = filtered
@@ -108,7 +107,7 @@ internal class PLGatherer
             // FIXME: Some repositories have multiple different packages within the same release.
             // When this may happen, the assets of that release has no package.json asset.
             // This means we need to unravel each release into separate ones.
-            var itemsToFetch = SplitIntoWork(relevantReleases);
+            var itemsToFetch = SplitIntoWork(relevantReleases, product.mode);
             
             var packageVersionFetchResults = await Task.WhenAll(itemsToFetch.Select(itemToFetch => DownloadAndCompilePackage(source, itemToFetch)));
             foreach (var packageVersionFetchResult in packageVersionFetchResults)
@@ -150,17 +149,22 @@ internal class PLGatherer
         }
     }
 
-    private List<PLPackageToFetch> SplitIntoWork(List<JToken> relevantReleasesUns)
+    private List<PLPackageToFetch> SplitIntoWork(List<JToken> relevantReleasesUns, PLMode? productMode)
     {
         return relevantReleasesUns
             .SelectMany(relevantReleaseUns =>
             {
                 var assets = relevantReleaseUns[ReleaseAsset];
-                if (_excessiveMode)
+                if (productMode != PLMode.PackageJsonAssetOnly)
                 {
                     var containsPackageJsonAsset = AtLeastOneOfTheAssetsIsPackageJson(relevantReleaseUns);
                     if (containsPackageJsonAsset)
                     {
+                        if (productMode == PLMode.ExcessiveWhenNeeded)
+                        {
+                            return UsePackageJson(assets, relevantReleaseUns);
+                        }
+                        
                         // If it contains package.json, then it must only have just one zip in it.
                         var onlyZipAsset = assets.First(IsAssetThatZipFile);
                         return new List<PLPackageToFetch> { new()
@@ -191,19 +195,24 @@ internal class PLGatherer
                     }
                 }
 
-                var packageJsonAsset = assets.First(IsAssetThatPackageJsonFile);
-                var zipAsset = assets.First(IsAssetThatZipFile);
-                return new List<PLPackageToFetch> { new()
-                {
-                    urlOfDataToFetch = packageJsonAsset[AssetBrowserDownloadUrl].Value<string>(),
-                    downloadCountOfActualPayload = zipAsset[AssetDownloadCount].Value<int>(),
-                    useExcessiveMode = false,
-                    
-                    urlOfPackageDownloadToStore = zipAsset[AssetBrowserDownloadUrl].Value<string>(),
-                    unityPackageNullable = FindUnitypackageAssetOrNull(relevantReleaseUns)
-                } };
+                return UsePackageJson(assets, relevantReleaseUns);
             })
             .ToList();
+    }
+
+    private static List<PLPackageToFetch> UsePackageJson(JToken assets, JToken relevantReleaseUns)
+    {
+        var packageJsonAsset = assets.First(IsAssetThatPackageJsonFile);
+        var zipAsset = assets.First(IsAssetThatZipFile);
+        return new List<PLPackageToFetch> { new()
+        {
+            urlOfDataToFetch = packageJsonAsset[AssetBrowserDownloadUrl].Value<string>(),
+            downloadCountOfActualPayload = zipAsset[AssetDownloadCount].Value<int>(),
+            useExcessiveMode = false,
+                    
+            urlOfPackageDownloadToStore = zipAsset[AssetBrowserDownloadUrl].Value<string>(),
+            unityPackageNullable = FindUnitypackageAssetOrNull(relevantReleaseUns)
+        } };
     }
 
     private static void SortPackage(PLPackage package)

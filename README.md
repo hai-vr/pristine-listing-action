@@ -22,11 +22,18 @@ for an example of a repository that uses this.
 
 The following [workflow call inputs](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#onworkflow_callinputs) are exposed:
 
-- `excessiveMode` boolean, defaults to `false`:
-  - If `true`, will to download the ZIP of each release in order to calculate the `zipSHA256`.
-  - If `false`, will download the `package.json` asset from the release, and not calculate any `zipSHA256` value (see [Differences](#differences) section below).
 - `includeDownloadCount` boolean, defaults to `false`:
   - When `true`, the description of each version is modified to include the number of downloads for that versions.
+
+### Settings
+
+- `defaultMode` enum:
+  - `PackageJsonAssetOnly`: Only use the `package.json` asset of the release to extract information.
+  - `ExcessiveWhenNeeded`: Use the `package.json` asset of the release to extract information; if there's none, try to download the zip and read the `package.json` file in that zip.
+  - `ExcessiveAlways`: Always download the zip and read the `package.json` file in that zip.
+  - Additional notes:
+    - If the zip is downloaded, the value of `zipSHA256` will be calculated.
+    - If the zip is not downloaded, it will not calculate any `zipSHA256` value (see [Differences](#differences) section below).
 
 ## Differences
 

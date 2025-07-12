@@ -21,11 +21,9 @@ internal class Program
             var githubToken = EnvVar("IN__GITHUB_TOKEN");
             if (string.IsNullOrWhiteSpace(githubToken)) throw new ArgumentException("IN__GITHUB_TOKEN env var contains nothing");
 
-            var excessiveMode = false;
             var includeDownloadCount = false;
             var devOnly = false;
 
-            if (bool.TryParse(EnvVar("IN__EXCESSIVE_MODE"), out var doExcessiveMode)) excessiveMode = doExcessiveMode;
             if (bool.TryParse(EnvVar("IN__INCLUDE_DOWNLOAD_COUNT"), out var doIncludeDownloadCount)) includeDownloadCount = doIncludeDownloadCount;
             if (bool.TryParse(EnvVar("IN__DEVONLY"), out var doDevOnly)) devOnly = doDevOnly;
             
@@ -34,7 +32,7 @@ internal class Program
             var inputFile = "input.json";
             var outputFile = "index.json";
 
-            await new Program(githubToken, inputFile, $"output/{outputFile}", excessiveMode, includeDownloadCount, devOnly).Run();
+            await new Program(githubToken, inputFile, $"output/{outputFile}", includeDownloadCount, devOnly).Run();
         }
         catch (Exception e)
         {
@@ -44,13 +42,13 @@ internal class Program
         }
     }
 
-    private Program(string githubToken, string inputFile, string outputFile, bool excessiveMode, bool includeDownloadCount, bool devOnly)
+    private Program(string githubToken, string inputFile, string outputFile, bool includeDownloadCount, bool devOnly)
     {
         _inputFile = inputFile;
         _includeDownloadCount = includeDownloadCount;
         _devOnly = devOnly;
 
-        _gatherer = new PLGatherer(githubToken, excessiveMode);
+        _gatherer = new PLGatherer(githubToken);
         _outputter = new PLOutputter(outputFile);
     }
 
@@ -67,6 +65,7 @@ internal class Program
         {
             product.includePrereleases ??= input.settings.defaultIncludePrereleases;
             product.onlyPackageNames ??= new List<string>();
+            if (product.mode is null or PLMode.Undefined) product.mode = input.settings.defaultMode;
         }
         
         var outputListing = await _gatherer.DownloadAndAggregate(input);
