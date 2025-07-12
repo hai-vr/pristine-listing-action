@@ -1,4 +1,6 @@
-﻿namespace Hai.PristineListing;
+﻿using System.ComponentModel;
+
+namespace Hai.PristineListing;
 
 public class PLInput
 {
@@ -17,5 +19,6 @@ public class PLInputListingData
 public class PLProduct
 {
     public string repository;
-    public bool? includePrereleases;
+    [DefaultValue(true)]
+    public bool includePrereleases;
 }

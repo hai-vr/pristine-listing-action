@@ -59,11 +59,10 @@ internal class Program
         Directory.CreateDirectory("output");
         
         var inputJson = await File.ReadAllTextAsync(_inputFile, Encoding.UTF8);
-        var input = JsonConvert.DeserializeObject<PLInput>(inputJson);
-        foreach (var product in input.products)
+        var input = JsonConvert.DeserializeObject<PLInput>(inputJson, new JsonSerializerSettings
         {
-            product.includePrereleases ??= true;
-        }
+            DefaultValueHandling = DefaultValueHandling.Populate
+        });
         
         var outputListing = await _gatherer.DownloadAndAggregate(input);
 
