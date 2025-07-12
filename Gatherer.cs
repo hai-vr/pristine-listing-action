@@ -4,6 +4,7 @@ using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
 using Newtonsoft.Json.Linq;
+using Semver;
 
 namespace Hai.PristineListing;
 
@@ -97,10 +98,6 @@ internal class PLGatherer
                 versions = new Dictionary<string, PLPackageVersion>()
             };
 
-            // An assumption is made that relevantReleases (and by extension releasesUns) is already stably sorted
-            // by version from more recent versions to older versions.
-            // Unsure how much impact this may affect repository listing client applications (e.g. VPM Catalog, ALCOM, ...),
-            // but we do make the assumption in the Outputter that the most recent package is the first in the versions list.
             var packageVersions = await Task.WhenAll(relevantReleases.Select(releaseUns => DownloadAndCompilePackage(source, releaseUns)));
             foreach (var packageVersion in packageVersions)
             {
@@ -109,6 +106,18 @@ internal class PLGatherer
                     package.versions.Add(packageVersion.version, packageVersion);
                 }
             }
+            
+            // GitHub releases are usually sorted already in the desired order, but to be extra sure,
+            // sort the releases by semver precedence in descending order.
+            // Unsure how existing repository listing client applications cope with unordered items in the JSON object (e.g. VPM Catalog, ALCOM, ...),
+            // however, we do make the assumption in our Outputter that the most recent package is the first in the versions list.
+            var reorderedKeys = package.versions.Values
+                .OrderByDescending(packageVersion => packageVersion.semver, SemVersion.PrecedenceComparer)
+                .Select(packageVersion => packageVersion.version)
+                .ToList();
+            
+            // TODO: Dictionary aren't supposed to have a given iteration order, it may be relevant to switch this to a JObject or something.
+            package.versions = NewOrderedDict(reorderedKeys, package);
 
             return package;
         }
@@ -117,6 +126,16 @@ internal class PLGatherer
             await source.CancelAsync();
             throw;
         }
+    }
+
+    private static Dictionary<string, PLPackageVersion> NewOrderedDict(List<string> keys, PLPackage package)
+    {
+        var reorderedDict = new Dictionary<string, PLPackageVersion>();
+        foreach (var key in keys)
+        {
+            reorderedDict[key] = package.versions[key];
+        }
+        return reorderedDict;
     }
 
     private static bool IsPrerelease(string version)
@@ -175,11 +194,12 @@ internal class PLGatherer
     {
         var package = JObject.Parse(intermediary.packageJson);
 
+        var version = package["version"].Value<string>();
         return new PLPackageVersion
         {
             name = package[PackageName].Value<string>(),
             displayName = package["displayName"].Value<string>(),
-            version = package["version"].Value<string>(), // Was formerly: (string)releaseUns[ReleaseTagName]
+            version = version, // Was formerly: (string)releaseUns[ReleaseTagName]
             unity = package["unity"]?.Value<string>(),
             description = package["description"]?.Value<string>(),
             dependencies = AsDictionary(package["dependencies"]?.Value<JObject>()),
@@ -194,7 +214,8 @@ internal class PLGatherer
             vrchatVersion = package["vrchatVersion"]?.Value<string>(),
             legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
             
-            downloadCount = downloadCount
+            downloadCount = downloadCount,
+            semver = SemVersion.Parse(version, SemVersionStyles.Any)
         };
     }
 

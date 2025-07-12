@@ -1,4 +1,6 @@
-﻿namespace Hai.PristineListing;
+﻿using Semver;
+
+namespace Hai.PristineListing;
 
 public class PLOutputListing
 {
@@ -37,6 +39,7 @@ public class PLPackageVersion
     public Dictionary<string, string> legacyFolders; // VRC-specific
 
     internal int downloadCount; // This is internal so that it doesn't get serialized to Json
+    internal SemVersion semver;
 }
 
 public class PLAuthor

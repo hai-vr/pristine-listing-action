@@ -10,6 +10,7 @@
     <ItemGroup>
       <PackageReference Include="Markdig" Version="0.41.3" />
       <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+      <PackageReference Include="Semver" Version="3.0.0" />
     </ItemGroup>
 
     <ItemGroup>
