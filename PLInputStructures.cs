@@ -17,4 +17,5 @@ public class PLInputListingData
 public class PLProduct
 {
     public string repository;
+    public bool? includePrereleases;
 }

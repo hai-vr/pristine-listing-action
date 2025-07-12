@@ -60,6 +60,10 @@ internal class Program
         
         var inputJson = await File.ReadAllTextAsync(_inputFile, Encoding.UTF8);
         var input = JsonConvert.DeserializeObject<PLInput>(inputJson);
+        foreach (var product in input.products)
+        {
+            product.includePrereleases ??= true;
+        }
         
         var outputListing = await _gatherer.DownloadAndAggregate(input);
 

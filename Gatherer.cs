@@ -33,6 +33,8 @@ internal class PLGatherer
 
         var packages = await AsPackages(input.products);
         outputListing.packages = packages
+            // A package may have 0 versions if they're all prereleases and prereleases are not included in the
+            // product configuration. In this case, remove the package altogether.
             .Where(package => package.versions.Count > 0)
             // NOTE: This doesn't support multiple repositories adding to the same package name.
             // This is generally not a problem as we're aggregating from repositories that we have ownership of,
@@ -60,7 +62,7 @@ internal class PLGatherer
         var cts = new CancellationTokenSource();
         try
         {
-            var results = await Task.WhenAll(products.Select(product => NavigatePackage(product.repository, cts)));
+            var results = await Task.WhenAll(products.Select(product => NavigatePackage(product, cts)));
             return results;
         }
         catch (Exception)
@@ -74,13 +76,13 @@ internal class PLGatherer
         }
     }
 
-    private async Task<PLPackage> NavigatePackage(string repository, CancellationTokenSource source)
+    private async Task<PLPackage> NavigatePackage(PLProduct product, CancellationTokenSource source)
     {
         source.Token.ThrowIfCancellationRequested();
 
         try
         {
-            ParseRepository(repository, out var owner, out var repo);
+            ParseRepository(product.repository, out var owner, out var repo);
 
             var releasesUns = await FetchReleaseDataUnstructured(owner, repo, source);
 
@@ -102,7 +104,10 @@ internal class PLGatherer
             var packageVersions = await Task.WhenAll(relevantReleases.Select(releaseUns => DownloadAndCompilePackage(source, releaseUns)));
             foreach (var packageVersion in packageVersions)
             {
-                package.versions.Add(packageVersion.version, packageVersion);
+                if (product.includePrereleases == true || !IsPrerelease(packageVersion.version))
+                {
+                    package.versions.Add(packageVersion.version, packageVersion);
+                }
             }
 
             return package;
@@ -112,6 +117,11 @@ internal class PLGatherer
             await source.CancelAsync();
             throw;
         }
+    }
+
+    private static bool IsPrerelease(string version)
+    {
+        return version.Contains('-');
     }
 
     private static bool ThereAreAssets(JToken releaseUns)
