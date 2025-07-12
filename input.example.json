@@ -5,6 +5,9 @@
         "url": "https://hai-vr.github.io/vpm-listing/index.json",
         "id": "dev.hai-vr.pristine-developeronly"
     },
+    "settings" : {
+        "defaultIncludePrereleases" : true
+    },
     "products": [
         { "repository" : "hai-vr/animation-viewer-vcc" },
         { "repository" : "hai-vr/animator-as-code-ndmf-processor", "includePrereleases" : false },

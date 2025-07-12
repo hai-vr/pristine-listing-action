@@ -63,6 +63,10 @@ internal class Program
         {
             DefaultValueHandling = DefaultValueHandling.Populate
         });
+        foreach (var product in input.products)
+        {
+            product.includePrereleases ??= input.settings.defaultIncludePrereleases;
+        }
         
         var outputListing = await _gatherer.DownloadAndAggregate(input);
 
