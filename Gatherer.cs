@@ -32,7 +32,7 @@ internal class PLGatherer
     {
         var outputListing = NewOutputListing(input.listingData);
 
-        var packages = await AsPackages(input.products);
+        var packages = await ResolvePackages(input.products);
         outputListing.packages = packages
             // A package may have 0 versions if they're all prereleases and prereleases are not included in the
             // product configuration. In this case, remove the package altogether.
@@ -58,12 +58,12 @@ internal class PLGatherer
         };
     }
 
-    private async Task<PLPackage[]> AsPackages(List<PLProduct> products)
+    private async Task<PLPackage[]> ResolvePackages(List<PLProduct> products)
     {
         var cts = new CancellationTokenSource();
         try
         {
-            var results = await Task.WhenAll(products.Select(product => NavigatePackage(product, cts)));
+            var results = await Task.WhenAll(products.Select(product => ResolvePackage(product, cts)));
             return results;
         }
         catch (Exception)
@@ -77,7 +77,7 @@ internal class PLGatherer
         }
     }
 
-    private async Task<PLPackage> NavigatePackage(PLProduct product, CancellationTokenSource source)
+    private async Task<PLPackage> ResolvePackage(PLProduct product, CancellationTokenSource source)
     {
         source.Token.ThrowIfCancellationRequested();
 
@@ -98,7 +98,8 @@ internal class PLGatherer
 
             var package = new PLPackage
             {
-                versions = new Dictionary<string, PLPackageVersion>()
+                versions = new Dictionary<string, PLPackageVersion>(),
+                repositoryUrl = $"https://github.com/{product.repository}"
             };
 
             var packageVersions = await Task.WhenAll(relevantReleases.Select(releaseUns => DownloadAndCompilePackage(source, releaseUns)));

@@ -51,9 +51,10 @@ internal class PLOutputter
             var firstVersion = versions.Values.First();
             sw.WriteLine($"- displayName: {firstVersion.displayName}");
             sw.WriteLine($"- description: {firstVersion.description}");
-            sw.WriteLine($"- totalDownloadCount: {versions.Values.Select(version => version.downloadCount).Sum()}");
+            sw.WriteLine($"- totalDownloadCount: {package.Value.totalDownloadCount}");
             if (firstVersion.changelogUrl != null) sw.WriteLine($"- changelogUrl: [{firstVersion.changelogUrl}]({firstVersion.changelogUrl})");
             if (firstVersion.documentationUrl != null) sw.WriteLine($"- documentationUrl: [{firstVersion.documentationUrl}]({firstVersion.documentationUrl})");
+            sw.WriteLine($"- repositoryUrl: [{package.Value.repositoryUrl}]({package.Value.repositoryUrl})");
             if (firstVersion.unity != null) sw.WriteLine($"- unity: {firstVersion.unity}");
             if (firstVersion.vrchatVersion != null) sw.WriteLine($"- vrchatVersion: {firstVersion.vrchatVersion}");
             if (firstVersion.dependencies != null && firstVersion.dependencies.Count > 0)
