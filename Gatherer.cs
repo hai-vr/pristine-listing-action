@@ -32,7 +32,7 @@ internal class PLGatherer
     {
         var outputListing = NewOutputListing(input.listingData);
 
-        var packages = await ResolvePackages(input.products, input.settings);
+        var packages = await ResolvePackagesOfProducts(input.products, input.settings);
         outputListing.packages = packages
             // A package may have 0 versions if they're all prereleases and prereleases are not included in the
             // product configuration. In this case, remove the package altogether.
@@ -58,12 +58,12 @@ internal class PLGatherer
         };
     }
 
-    private async Task<List<PLPackage>> ResolvePackages(List<PLProduct> products, PLSettings settings)
+    private async Task<List<PLPackage>> ResolvePackagesOfProducts(List<PLProduct> products, PLSettings settings)
     {
         var cts = new CancellationTokenSource();
         try
         {
-            var results = await Task.WhenAll(products.Select(product => ResolvePackage(product, settings, cts)));
+            var results = await Task.WhenAll(products.Select(product => ResolvePackagesOfProduct(product, settings, cts)));
             return results.SelectMany(it => it).ToList();
         }
         catch (Exception)
@@ -77,7 +77,7 @@ internal class PLGatherer
         }
     }
 
-    private async Task<List<PLPackage>> ResolvePackage(PLProduct product, PLSettings settings, CancellationTokenSource source)
+    private async Task<List<PLPackage>> ResolvePackagesOfProduct(PLProduct product, PLSettings settings, CancellationTokenSource source)
     {
         source.Token.ThrowIfCancellationRequested();
 
@@ -89,7 +89,8 @@ internal class PLGatherer
             // On some large repos, this can take a while.
             // It would be nice to get the package.json assets as soon as we fetch a page.
             var releasesUns = await FetchReleaseDataUnstructured(owner, repo, source);
-
+            
+            // ## Pre-filtering: Discard releases that are guaranteed to be irrelevant.
             var filtered = releasesUns
                 .Where(ThereAreAssets)
                 .Where(AtLeastOneOfTheAssetsIsZipFile);
@@ -104,12 +105,15 @@ internal class PLGatherer
             
             var packageNameToPackage = new Dictionary<string, PLPackage>();
 
-            // FIXME: Some repositories have multiple different packages within the same release.
+            // ## Some repositories have multiple different packages within the same release.
             // When this may happen, the assets of that release has no package.json asset.
             // This means we need to unravel each release into separate ones.
             var itemsToFetch = SplitIntoWork(relevantReleases, product.mode);
             
+            // ## Proceed to download what's necessary to figure out what each package may be.
             var packageVersionFetchResults = await Task.WhenAll(itemsToFetch.Select(itemToFetch => DownloadAndCompilePackage(source, itemToFetch)));
+            
+            // ## Post-filtering: Discard packages that we couldn't confidently filter out earlier.
             foreach (var packageVersionFetchResult in packageVersionFetchResults)
             {
                 if (packageVersionFetchResult.success)
@@ -135,6 +139,7 @@ internal class PLGatherer
                 }
             }
 
+            // ## Ensure that the versions of each package is ordered the way we expect it.
             foreach (var package in packageNameToPackage.Values)
             {
                 SortPackage(package);
