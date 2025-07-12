@@ -40,7 +40,7 @@ internal class PLOutputter
         sw.WriteLine($"- id: {outputListing.id}");
         sw.WriteLine($"- name: {outputListing.name}");
         sw.WriteLine($"- author: {outputListing.author}");
-        sw.WriteLine($"- url: {outputListing.url}");
+        sw.WriteLine($"- url: [{outputListing.url}]({outputListing.url})");
         sw.WriteLine("");
         foreach (var package in outputListing.packages)
         {
@@ -52,8 +52,8 @@ internal class PLOutputter
             sw.WriteLine($"- displayName: {firstVersion.displayName}");
             sw.WriteLine($"- description: {firstVersion.description}");
             sw.WriteLine($"- totalDownloadCount: {versions.Values.Select(version => version.downloadCount).Sum()}");
-            if (firstVersion.changelogUrl != null) sw.WriteLine($"- changelogUrl: {firstVersion.changelogUrl}");
-            if (firstVersion.documentationUrl != null) sw.WriteLine($"- documentationUrl: {firstVersion.documentationUrl}");
+            if (firstVersion.changelogUrl != null) sw.WriteLine($"- changelogUrl: [{firstVersion.changelogUrl}]({firstVersion.changelogUrl})");
+            if (firstVersion.documentationUrl != null) sw.WriteLine($"- documentationUrl: [{firstVersion.documentationUrl}]({firstVersion.documentationUrl})");
             if (firstVersion.unity != null) sw.WriteLine($"- unity: {firstVersion.unity}");
             if (firstVersion.vrchatVersion != null) sw.WriteLine($"- vrchatVersion: {firstVersion.vrchatVersion}");
             if (firstVersion.dependencies != null && firstVersion.dependencies.Count > 0)
