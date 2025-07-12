@@ -33,6 +33,14 @@ internal class PLOutputter
     private async Task CreateWebpage(PLOutputListing outputListing)
     {
         var sw = new StringWriter();
+        // FIXME: Yes, this needs to be replaced.
+        sw.WriteLine(@"<style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, ""Segoe UI"", Helvetica, Arial, sans-serif;
+      margin: 2em;
+      line-height: 1.6;
+    }
+  </style>");
         sw.WriteLine($"# {outputListing.id}");
         sw.WriteLine("");
         sw.WriteLine("This repository listing was generated using [hai-vr/pristine-listing-action](https://github.com/hai-vr/pristine-listing-action/).");

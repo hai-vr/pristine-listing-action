@@ -13,6 +13,8 @@ public class PLSettings
 {
     [DefaultValue(true)]
     public bool defaultIncludePrereleases;
+    [DefaultValue(true)]
+    public bool excessiveModeToleratesPackageJsonAssetMissing;
 }
 
 public class PLInputListingData

@@ -17,6 +17,7 @@ internal class PLGatherer
     private const string HiddenBodyTag = @"$\texttt{Hidden}$";
     private const string PackageJsonFilename = "package.json";
     private const string AssetBrowserDownloadUrl = "browser_download_url";
+    private const string AssetDownloadCount = "download_count";
 
     private readonly HttpClient _http;
     private readonly bool _excessiveMode;
@@ -33,7 +34,7 @@ internal class PLGatherer
     {
         var outputListing = NewOutputListing(input.listingData);
 
-        var packages = await ResolvePackages(input.products);
+        var packages = await ResolvePackages(input.products, input.settings);
         outputListing.packages = packages
             // A package may have 0 versions if they're all prereleases and prereleases are not included in the
             // product configuration. In this case, remove the package altogether.
@@ -59,13 +60,13 @@ internal class PLGatherer
         };
     }
 
-    private async Task<PLPackage[]> ResolvePackages(List<PLProduct> products)
+    private async Task<List<PLPackage>> ResolvePackages(List<PLProduct> products, PLSettings settings)
     {
         var cts = new CancellationTokenSource();
         try
         {
-            var results = await Task.WhenAll(products.Select(product => ResolvePackage(product, cts)));
-            return results;
+            var results = await Task.WhenAll(products.Select(product => ResolvePackage(product, settings, cts)));
+            return results.SelectMany(it => it).ToList();
         }
         catch (Exception)
         {
@@ -78,7 +79,7 @@ internal class PLGatherer
         }
     }
 
-    private async Task<PLPackage> ResolvePackage(PLProduct product, CancellationTokenSource source)
+    private async Task<List<PLPackage>> ResolvePackage(PLProduct product, PLSettings settings, CancellationTokenSource source)
     {
         source.Token.ThrowIfCancellationRequested();
 
@@ -91,46 +92,130 @@ internal class PLGatherer
             // It would be nice to get the package.json assets as soon as we fetch a page.
             var releasesUns = await FetchReleaseDataUnstructured(owner, repo, source);
 
-            var relevantReleases = releasesUns
+            var filtered = releasesUns
                 .Where(ThereAreAssets)
-                .Where(AtLeastOneOfTheAssetsIsPackageJson)
+                .Where(AtLeastOneOfTheAssetsIsZipFile);
+            
+            if (!_excessiveMode || !settings.excessiveModeToleratesPackageJsonAssetMissing)
+                filtered = filtered.Where(AtLeastOneOfTheAssetsIsPackageJson);
+            
+            var relevantReleases = filtered
                 .Where(IfThereIsABodyThenItDoesNotContainTheHiddenTag)
                 .ToList();
+            
+            var packageNameToPackage = new Dictionary<string, PLPackage>();
 
-            var package = new PLPackage
+            // FIXME: Some repositories have multiple different packages within the same release.
+            // When this may happen, the assets of that release has no package.json asset.
+            // This means we need to unravel each release into separate ones.
+            var itemsToFetch = SplitIntoWork(relevantReleases);
+            
+            var packageVersionFetchResults = await Task.WhenAll(itemsToFetch.Select(itemToFetch => DownloadAndCompilePackage(source, itemToFetch)));
+            foreach (var packageVersionFetchResult in packageVersionFetchResults)
             {
-                versions = new Dictionary<string, PLPackageVersion>(),
-                repositoryUrl = $"https://github.com/{product.repository}"
-            };
-
-            var packageVersions = await Task.WhenAll(relevantReleases.Select(releaseUns => DownloadAndCompilePackage(source, releaseUns)));
-            foreach (var packageVersion in packageVersions)
-            {
-                if (product.includePrereleases == true || !IsPrerelease(packageVersion.version))
+                if (packageVersionFetchResult.success)
                 {
-                    package.versions.Add(packageVersion.version, packageVersion);
+                    var packageVersion = packageVersionFetchResult.version!;
+                    if (product.includePrereleases == true || !IsPrerelease(packageVersion.version))
+                    {
+                        if (!packageNameToPackage.TryGetValue(packageVersion.name, out var ourPackage))
+                        {
+                            ourPackage = new PLPackage
+                            {
+                                versions = new Dictionary<string, PLPackageVersion>(),
+                                repositoryUrl = $"https://github.com/{product.repository}"
+                            };
+                            packageNameToPackage[packageVersion.name] = ourPackage;
+                        }
+
+                        ourPackage.versions.Add(packageVersion.version, packageVersion);
+                    }
                 }
             }
-            
-            // GitHub releases are usually sorted already in the desired order, but to be extra sure,
-            // sort the releases by semver precedence in descending order.
-            // Unsure how existing repository listing client applications cope with unordered items in the JSON object (e.g. VPM Catalog, ALCOM, ...),
-            // however, we do make the assumption in our Outputter that the most recent package is the first in the versions list.
-            var reorderedKeys = package.versions.Values
-                .OrderByDescending(packageVersion => packageVersion.semver, SemVersion.PrecedenceComparer)
-                .Select(packageVersion => packageVersion.version)
-                .ToList();
-            
-            // TODO: Dictionary aren't supposed to have a given iteration order, it may be relevant to switch this to a JObject or something.
-            package.versions = NewOrderedDict(reorderedKeys, package);
 
-            return package;
+            foreach (var package in packageNameToPackage.Values)
+            {
+                SortPackage(package);
+            }
+
+            return packageNameToPackage.Values.ToList();
         }
         catch (Exception)
         {
             await source.CancelAsync();
             throw;
         }
+    }
+
+    private List<PLPackageToFetch> SplitIntoWork(List<JToken> relevantReleasesUns)
+    {
+        return relevantReleasesUns
+            .SelectMany(relevantReleaseUns =>
+            {
+                var assets = relevantReleaseUns[ReleaseAsset];
+                if (_excessiveMode)
+                {
+                    var containsPackageJsonAsset = AtLeastOneOfTheAssetsIsPackageJson(relevantReleaseUns);
+                    if (containsPackageJsonAsset)
+                    {
+                        // If it contains package.json, then it must only have just one zip in it.
+                        var onlyZipAsset = assets.First(IsAssetThatZipFile);
+                        return new List<PLPackageToFetch> { new()
+                        {
+                            urlOfDataToFetch = onlyZipAsset[AssetBrowserDownloadUrl].Value<string>(),
+                            downloadCountOfActualPayload = onlyZipAsset[AssetDownloadCount].Value<int>(),
+                            useExcessiveMode = true,
+                            
+                            urlOfPackageDownloadToStore = onlyZipAsset[AssetBrowserDownloadUrl].Value<string>(),
+                            unityPackageNullable = FindUnitypackageAssetOrNull(relevantReleaseUns)
+                        } };
+                    }
+                    else
+                    {
+                        // If it doesn't, then it *could* be a release that contains different packages (not different versions of the same package).
+                        return assets
+                            .Where(IsAssetThatZipFile)
+                            .Select(zipFileAsset => new PLPackageToFetch
+                            {
+                                urlOfDataToFetch = zipFileAsset[AssetBrowserDownloadUrl].Value<string>(),
+                                downloadCountOfActualPayload = zipFileAsset[AssetDownloadCount].Value<int>(),
+                                useExcessiveMode = true,
+                                
+                                urlOfPackageDownloadToStore = zipFileAsset[AssetBrowserDownloadUrl].Value<string>(),
+                                unityPackageNullable = null
+                            })
+                            .ToList();
+                    }
+                }
+
+                var packageJsonAsset = assets.First(IsAssetThatPackageJsonFile);
+                var zipAsset = assets.First(IsAssetThatZipFile);
+                return new List<PLPackageToFetch> { new()
+                {
+                    urlOfDataToFetch = packageJsonAsset[AssetBrowserDownloadUrl].Value<string>(),
+                    downloadCountOfActualPayload = zipAsset[AssetDownloadCount].Value<int>(),
+                    useExcessiveMode = false,
+                    
+                    urlOfPackageDownloadToStore = zipAsset[AssetBrowserDownloadUrl].Value<string>(),
+                    unityPackageNullable = FindUnitypackageAssetOrNull(relevantReleaseUns)
+                } };
+            })
+            .ToList();
+    }
+
+    private static void SortPackage(PLPackage package)
+    {
+        // GitHub releases are usually sorted already in the desired order, but to be extra sure,
+        // sort the releases by semver precedence in descending order.
+        // Unsure how existing repository listing client applications cope with unordered items in the JSON object (e.g. VPM Catalog, ALCOM, ...),
+        // however, we do make the assumption in our Outputter that the most recent package is the first in the versions list.
+        var reorderedKeys = package.versions.Values
+            .OrderByDescending(packageVersion => packageVersion.semver, SemVersion.PrecedenceComparer)
+            .Select(packageVersion => packageVersion.version)
+            .ToList();
+
+        // TODO: Dictionary aren't supposed to have a given iteration order, it may be relevant to switch this to a JObject or something.
+        package.versions = NewOrderedDict(reorderedKeys, package);
     }
 
     private static Dictionary<string, PLPackageVersion> NewOrderedDict(List<string> keys, PLPackage package)
@@ -158,45 +243,58 @@ internal class PLGatherer
         return releaseUns[ReleaseAsset].Any(asset => asset[AssetName].Value<string>() == PackageJsonFilename);
     }
 
+    private static bool AtLeastOneOfTheAssetsIsZipFile(JToken releaseUns)
+    {
+        return releaseUns[ReleaseAsset].Any(IsAssetThatZipFile);
+    }
+
     private static bool IfThereIsABodyThenItDoesNotContainTheHiddenTag(JToken releaseUns)
     {
         return releaseUns["body"] == null || !releaseUns["body"].Value<string>().Contains(HiddenBodyTag);
     }
 
-    private async Task<PLPackageVersion> DownloadAndCompilePackage(CancellationTokenSource source, JToken releaseUns)
+    private async Task<PLPackageVersionFetchResult> DownloadAndCompilePackage(CancellationTokenSource source, PLPackageToFetch packageToFetch)
     {
         // This will download the ZIP file of the release, in order to calculate "zipSHA256". This isn't really used.
-        if (_excessiveMode) return await ExcessiveMode(source, releaseUns);
+        if (packageToFetch.useExcessiveMode) return await ExcessiveMode(source, packageToFetch);
         
         // This will download the package.json asset of the release. The "zipSHA256" value won't be able to be calculated.
-        else return await LighterMode(source, releaseUns);
+        else return await LighterMode(source, packageToFetch);
     }
 
-    private async Task<PLPackageVersion> ExcessiveMode(CancellationTokenSource source, JToken releaseUns)
+    private async Task<PLPackageVersionFetchResult> ExcessiveMode(CancellationTokenSource source, PLPackageToFetch packageToFetch)
     {
-        var zipAsset = releaseUns[ReleaseAsset].First(IsAssetThatZipFile);
-        var downloadCount = zipAsset["download_count"].Value<int>();
-        var downloadUrl = zipAsset[AssetBrowserDownloadUrl].Value<string>();
+        var downloadCount = packageToFetch.downloadCountOfActualPayload;
+        var downloadUrl = packageToFetch.urlOfDataToFetch;
         var intermediary = await DownloadZip(downloadUrl, source);
+        if (!intermediary.success)
+        {
+            return new PLPackageVersionFetchResult
+            {
+                success = false
+            };
+        }
 
-        var unityPackageNullable = FindUnitypackageAssetOrNull(releaseUns);
-
-        return ToPackage(intermediary, downloadCount, downloadUrl, unityPackageNullable);
+        return new PLPackageVersionFetchResult
+        {
+            success = true,
+            version = ToPackage(intermediary, downloadCount, downloadUrl, packageToFetch.unityPackageNullable)
+        };
     }
 
-    private async Task<PLPackageVersion> LighterMode(CancellationTokenSource source, JToken releaseUns)
+    private async Task<PLPackageVersionFetchResult> LighterMode(CancellationTokenSource source, PLPackageToFetch packageToFetch)
     {
-        var zipAsset = releaseUns[ReleaseAsset].First(IsAssetThatZipFile);
-        var downloadCount = zipAsset["download_count"].Value<int>();
-        var downloadUrl = zipAsset[AssetBrowserDownloadUrl].Value<string>();
+        var downloadCount = packageToFetch.downloadCountOfActualPayload;
+        var downloadUrl = packageToFetch.urlOfPackageDownloadToStore;
 
-        var packageJsonAsset = releaseUns[ReleaseAsset].First(IsAssetThatPackageJsonFile);
-        var packageJsonUrl = packageJsonAsset[AssetBrowserDownloadUrl].Value<string>();
+        var packageJsonUrl = packageToFetch.urlOfDataToFetch;
         var intermediary = await DownloadPackageJson(packageJsonUrl, source);
 
-        var unityPackageNullable = FindUnitypackageAssetOrNull(releaseUns);
-
-        return ToPackage(intermediary, downloadCount, downloadUrl, unityPackageNullable);
+        return new PLPackageVersionFetchResult
+        {
+            success = true,
+            version = ToPackage(intermediary, downloadCount, downloadUrl, packageToFetch.unityPackageNullable)
+        };
     }
 
     private static PLUnitypackageIntermediary FindUnitypackageAssetOrNull(JToken releaseUns)
@@ -275,7 +373,9 @@ internal class PLGatherer
 
     private static bool IsAssetThatZipFile(JToken assetUns)
     {
-        return assetUns["content_type"].Value<string>() == "application/zip" && assetUns[AssetName].Value<string>().ToLowerInvariant().EndsWith(".zip");
+        var contentType = assetUns["content_type"].Value<string>();
+        return (contentType == "application/zip" || contentType == "application/x-zip-compressed")
+               && assetUns[AssetName].Value<string>().ToLowerInvariant().EndsWith(".zip");
     }
 
     private static bool IsAssetThatPackageJsonFile(JToken assetUns)
@@ -298,12 +398,23 @@ internal class PLGatherer
         var hashBytes = SHA256.HashData(data);
         var hashHex = Convert.ToHexStringLower(hashBytes);
 
-        var packageJson = Unzip(data);
-        return new PLIntermediary
+        if (TryUnzip(data, out var packageJson))
         {
-            hashHexNullableIfJson = hashHex,
-            packageJson = packageJson
-        };
+            return new PLIntermediary
+            {
+                success = true,
+                hashHexNullableIfJson = hashHex,
+                packageJson = packageJson
+            };
+        }
+        else
+        {
+            Console.WriteLine($"Zip file at {zipUrl} didn't have a package.json at the root of it.");
+            return new PLIntermediary
+            {
+                success = false
+            };
+        }
     }
 
     private async Task<PLIntermediary> DownloadPackageJson(string packageJsonUrl, CancellationTokenSource source)
@@ -320,21 +431,30 @@ internal class PLGatherer
 
         return new PLIntermediary
         {
+            success = true,
             hashHexNullableIfJson = null,
             packageJson = packageJson
         };
     }
 
-    private string Unzip(byte[] data)
+    private bool TryUnzip(byte[] data, out string packageJson)
     {
         using var stream = new MemoryStream(data);
         using var archive = new ZipArchive(stream, ZipArchiveMode.Read);
 
         var entry = archive.GetEntry(PackageJsonFilename);
-        if (entry == null) throw new FileNotFoundException("Missing package.json from .zip. We should not unzip in the first place if it wasn't a package to begin with.");
+        if (entry == null)
+        {
+            // On some repos, there may not be a package.json if there were older releases.
+            // This can happen in excessiveMode, where not only some of the earliest repos don't have a package.json asset exposed
+            // therefore we can't know if it's usable, the repo contains irrelevant zips in it.
+            packageJson = null;
+            return false;
+        }
 
         using var reader = new StreamReader(entry.Open(), Encoding.UTF8);
-        return reader.ReadToEnd();
+        packageJson = reader.ReadToEnd();
+        return true;
     }
 
     private async Task<List<JToken>> FetchReleaseDataUnstructured(string owner, string repo, CancellationTokenSource source)

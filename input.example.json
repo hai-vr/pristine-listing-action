@@ -6,7 +6,8 @@
         "id": "dev.hai-vr.pristine-developeronly"
     },
     "settings" : {
-        "defaultIncludePrereleases" : true
+        "defaultIncludePrereleases" : true,
+        "excessiveModeToleratesPackageJsonAssetMissing" : true
     },
     "products": [
         { "repository" : "hai-vr/animation-viewer-vcc" },
@@ -35,6 +36,6 @@
         { "repository" : "hai-vr/property-finder" },
         { "repository" : "hai-vr/resilience-toolkit" },
         { "repository" : "hai-vr/vcc-dependencies-for-vixen" },
-        { "repository" : "hai-vr/visual-expressions-editor-vcc"}
+        { "repository" : "hai-vr/visual-expressions-editor-vcc" }
     ]
 }
