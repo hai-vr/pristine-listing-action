@@ -16,7 +16,8 @@ internal class PLGatherer
     private const string PackageName = "name";
     private const string HiddenBodyTag = @"$\texttt{Hidden}$";
     private const string PackageJsonFilename = "package.json";
-    
+    private const string AssetBrowserDownloadUrl = "browser_download_url";
+
     private readonly HttpClient _http;
     private readonly bool _excessiveMode;
 
@@ -175,26 +176,40 @@ internal class PLGatherer
     {
         var zipAsset = releaseUns[ReleaseAsset].First(IsAssetThatZipFile);
         var downloadCount = zipAsset["download_count"].Value<int>();
-        var downloadUrl = zipAsset["browser_download_url"].Value<string>();
+        var downloadUrl = zipAsset[AssetBrowserDownloadUrl].Value<string>();
         var intermediary = await DownloadZip(downloadUrl, source);
 
-        return ToPackage(intermediary, downloadCount, downloadUrl);
+        var unityPackageNullable = FindUnitypackageAssetOrNull(releaseUns);
+
+        return ToPackage(intermediary, downloadCount, downloadUrl, unityPackageNullable);
     }
 
     private async Task<PLPackageVersion> LighterMode(CancellationTokenSource source, JToken releaseUns)
     {
         var zipAsset = releaseUns[ReleaseAsset].First(IsAssetThatZipFile);
         var downloadCount = zipAsset["download_count"].Value<int>();
-        var downloadUrl = zipAsset["browser_download_url"].Value<string>();
+        var downloadUrl = zipAsset[AssetBrowserDownloadUrl].Value<string>();
 
         var packageJsonAsset = releaseUns[ReleaseAsset].First(IsAssetThatPackageJsonFile);
-        var packageJsonUrl = packageJsonAsset["browser_download_url"].Value<string>();
+        var packageJsonUrl = packageJsonAsset[AssetBrowserDownloadUrl].Value<string>();
         var intermediary = await DownloadPackageJson(packageJsonUrl, source);
 
-        return ToPackage(intermediary, downloadCount, downloadUrl);
+        var unityPackageNullable = FindUnitypackageAssetOrNull(releaseUns);
+
+        return ToPackage(intermediary, downloadCount, downloadUrl, unityPackageNullable);
     }
 
-    private PLPackageVersion ToPackage(PLIntermediary intermediary, int downloadCount, string downloadUrl)
+    private static PLUnitypackageIntermediary FindUnitypackageAssetOrNull(JToken releaseUns)
+    {
+        var unitypackageAssetNullable = releaseUns[ReleaseAsset].FirstOrDefault(assetUns => assetUns[AssetName].Value<string>().ToLowerInvariant().EndsWith(".unitypackage"));
+        if (unitypackageAssetNullable == null) return null;
+        return new PLUnitypackageIntermediary
+        {
+            downloadUrl = unitypackageAssetNullable[AssetBrowserDownloadUrl].Value<string>(),
+        };
+    }
+
+    private PLPackageVersion ToPackage(PLIntermediary intermediary, int downloadCount, string downloadUrl, PLUnitypackageIntermediary unityPackageNullable)
     {
         var package = JObject.Parse(intermediary.packageJson);
 
@@ -219,7 +234,8 @@ internal class PLGatherer
             legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
             
             downloadCount = downloadCount,
-            semver = SemVersion.Parse(version, SemVersionStyles.Any)
+            semver = SemVersion.Parse(version, SemVersionStyles.Any),
+            unitypackageUrl = unityPackageNullable?.downloadUrl
         };
     }
 

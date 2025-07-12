@@ -40,6 +40,7 @@ public class PLPackageVersion
 
     internal int downloadCount; // This is internal so that it doesn't get serialized to Json
     internal SemVersion semver;
+    internal string? unitypackageUrl;
 }
 
 public class PLAuthor

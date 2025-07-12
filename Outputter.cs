@@ -76,7 +76,8 @@ internal class PLOutputter
             sw.WriteLine($"- versions:");
             foreach (var version in versions.Values)
             {
-                sw.WriteLine($"  - {version.version} -> {version.downloadCount}");
+                var appendUnitypackageDownload = version.unitypackageUrl != null ? $" \\[[.unitypackage]({version.unitypackageUrl})\\]" : "";
+                sw.WriteLine($"  - {version.version} \\[[.zip]({version.url})\\]{appendUnitypackageDownload} -> *{version.downloadCount} downloads*");
             }
             sw.WriteLine("");
         }
