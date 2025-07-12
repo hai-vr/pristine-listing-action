@@ -14,6 +14,21 @@ You should not use this repository as a workflow action unless you fork it first
 Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listing/blob/main/.github/workflows/build-listing.yml)
 for an example of a repository that uses this.
 
+### Example
+
+Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listing/blob/main/.github/workflows/build-listing.yml)
+for an example of a repository that uses this.
+
+### Workflow call inputs (`with:`)
+
+The following [workflow call inputs](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#onworkflow_callinputs) are exposed:
+
+- `excessiveMode` boolean, defaults to `false`:
+  - If `true`, will to download the ZIP of each release in order to calculate the `zipSHA256`.
+  - If `false`, will download the `package.json` asset from the release, and not calculate any `zipSHA256` value (see [Differences](#differences) section below).
+- `includeDownloadCount` boolean, defaults to `false`:
+  - When `true`, the description of each version is modified to include the number of downloads for that versions.
+
 ## Differences
 
 - By default, we don't download the zip file of the package itself, unless workflow input `excessiveMode` is set to true.
