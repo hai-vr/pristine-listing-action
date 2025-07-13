@@ -26,8 +26,6 @@ public class PLCoreOutputPackageVersion
     public PLCoreOutputPackageVRCConvention vrcConvention;
     public PLCoreOutputPackageListingConvention listingConvention;
     
-    // Listing-only properties
-
     // Metadata
     internal int downloadCount;
     internal SemVersion semver;
