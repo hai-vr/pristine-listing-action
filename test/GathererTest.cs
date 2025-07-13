@@ -9,7 +9,7 @@ namespace Hai.PristineListing.Tests;
 
 public class GathererTest
 {
-    private PLGatherer _gatherer;
+    private PLGatherer _sut;
     private Mock<HttpMessageHandler> _handlerMock;
 
     [SetUp]
@@ -19,7 +19,7 @@ public class GathererTest
         // TODO: Can we just mock HttpClient? Not doing it right now
         // because apparently non-virtual methods cannot be mocked or something
         var httpClient = new HttpClient(_handlerMock.Object);
-        _gatherer = new PLGatherer("myGithubToken", httpClient);
+        _sut = new PLGatherer("myGithubToken", httpClient);
     }
     
     [Test]
@@ -42,7 +42,7 @@ public class GathererTest
 
         
         // When
-        PLCoreOutputListing result = await _gatherer.DownloadAndAggregate(new PLCoreInput
+        PLCoreOutputListing result = await _sut.DownloadAndAggregate(new PLCoreInput
         {
             listingData = new PLCoreInputListingData
             {
