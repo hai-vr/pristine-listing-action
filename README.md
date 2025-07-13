@@ -58,3 +58,6 @@ The following [workflow call inputs](https://docs.github.com/en/actions/referenc
 
 - This supports GitHub releases that contain multiple different package assets within the same release.
 - This does not currently handle versions of a given package spread across multiple repositories.
+- This is not fault-tolerant: The repositories in `input.json` should point to repositories that you trust or have control of.
+  If a release of some repository contains garbage in its `package.json` then it may fail to execute.
+  - This is not injection-tolerant: If a `package.json` contains javascript then it may execute in the browser webpage.
