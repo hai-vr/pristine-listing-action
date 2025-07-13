@@ -48,7 +48,8 @@ Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listi
 - The generated web page is rudimentary and not meant for browsing by general users.
 - Caching is not implemented, so this will cause all `package.json` to be downloaded every time this action is run.
 - Versions of a package are ordered by descending precedence *(Newer Version, Prereleases of that newest version, Older version, Prereleases)*.
-  - Other generators might have been ordering versions of a package differently.
+  - Other generators might have been ordering versions of a package differently. For example, there is a repository listing that contains this inconsistent ordering sequence within it:
+  - `"3.8.1", "3.8.1-beta.4", "3.8.1-beta.3", "3.8.1-beta.2", "3.8.1-beta.1", "3.8.0", [...], "3.4.1", "3.4.0-beta.1", "3.4.0-beta.2", "3.4.0", "3.3.0-beta.1", "3.3.0"`
 
 ## Other notes
 
