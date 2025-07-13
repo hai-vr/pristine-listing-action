@@ -1,9 +1,9 @@
 ﻿pristine-listing-action
 ====
 
-This action partially replaces another repository listing aggregator.
+This action partially replaces another repository listing generator.
 
-I (*Haï~*) made it for use with non-VRC projects after the other listing aggregator started throwing errors.
+I (*Haï~*) made it for use with non-VRC projects after the other listing generator started throwing errors.
 
 ## Usage
 
@@ -17,13 +17,6 @@ Repositories are defined in the `input.json` file.
 
 Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listing/blob/main/.github/workflows/build-listing.yml)
 for an example of a repository that uses this.
-
-### Workflow call inputs (`with:`)
-
-The following [workflow call inputs](https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#onworkflow_callinputs) are exposed:
-
-- `includeDownloadCount` boolean, defaults to `false`:
-  - When `true`, the description of each version is modified to include the number of downloads for that versions.
 
 ### Settings
 
@@ -46,13 +39,15 @@ The following [workflow call inputs](https://docs.github.com/en/actions/referenc
 
 ## Differences
 
-- By default, we don't download the zip file of the package itself, unless workflow input `excessiveMode` is set to true.
+- By default, we don't download the zip file of the package itself, the `defaultMode` setting is changed.
   - The contents of the `package.json` file is read from the assets of the release.
   - Similarly to [bdunderscore/vpm-repo-list-generator](https://github.com/bdunderscore/vpm-repo-list-generator)
     we don't calculate the `zipSHA256` by default; however the code to do this is implemented.
 - The listing correctly aggregates [UPM package manifests that define the `author` field as `string`](https://docs.unity3d.com/Manual/upm-manifestPkg.html#:~:text=author,Object%20or%20string).
 - The generated web page is rudimentary and not meant for browsing by general users.
 - Caching is not implemented, so this will cause all `package.json` to be downloaded every time this action is run.
+- Versions of a package are ordered by descending precedence *(Newer Version, Prereleases of that newest version, Older version, Prereleases)*.
+  - Other generators might have been ordering versions of a package differently.
 
 ## Other notes
 
