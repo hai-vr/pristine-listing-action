@@ -78,7 +78,7 @@ public class PLOutputter
                 if (firstUpm.license != null) sw.WriteLine($"- license: {firstUpm.license}");
                 if (firstUpm.licensesUrl != null) sw.WriteLine($"- licensesUrl: [{firstUpm.licensesUrl}]({firstUpm.licensesUrl})");
                 if (firstUpm.unity != null) sw.WriteLine($"- unity: {firstUpm.unity}");
-                if (firstUpm.unityRelease != null) sw.WriteLine($"- unity: {firstUpm.unityRelease}");
+                if (firstUpm.unityRelease != null) sw.WriteLine($"- unityRelease: {firstUpm.unityRelease}");
                 if (firstVersion.vrcConvention.vrchatVersion != null) sw.WriteLine($"- vrchatVersion: {firstVersion.vrcConvention.vrchatVersion}");
                 if (firstUpm.dependencies != null && firstUpm.dependencies.Count > 0)
                 {
