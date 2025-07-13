@@ -83,7 +83,23 @@ public class PLOutputter
                     sw.WriteLine($"  - {dep.Key} : {dep.Value}");
                 }
             }
-            sw.WriteLine($"- author: {firstVersion.author.name}");
+
+            var author = firstVersion.author;
+            switch (author.Kind)
+            {
+                case PLCoreOutputAuthorKind.String:
+                    sw.WriteLine($"- author: {author.AsString()}");
+                    break;
+                case PLCoreOutputAuthorKind.Object:
+                    var authorObject = author.AsObject();
+                    sw.WriteLine($"- author:");
+                    sw.WriteLine($"  - name: {authorObject.name}");
+                    if (authorObject.email != null) sw.WriteLine($"  - email: {authorObject.email}");
+                    if (authorObject.url != null) sw.WriteLine($"  - url: {authorObject.url}");
+                    break;
+                default:
+                    throw new ArgumentOutOfRangeException();
+            }
             sw.WriteLine($"- metadata:");
             sw.WriteLine($"  - totalDownloadCount: {package.Value.totalDownloadCount}");
             sw.WriteLine($"  - repositoryUrl: [{package.Value.repositoryUrl}]({package.Value.repositoryUrl})");

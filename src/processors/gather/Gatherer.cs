@@ -370,19 +370,18 @@ public class PLGatherer
         return authorToken.Type switch
         {
             JTokenType.Object => ExtractAuthorObject(authorToken.Value<JObject>()),
-            JTokenType.String => new PLCoreOutputAuthor { name = authorToken.Value<string>() },
+            JTokenType.String => PLCoreOutputAuthor.FromString(authorToken.Value<string>()),
             _  => throw new DataException("Can't deserialize author from package.json")
         };
     }
 
     private static PLCoreOutputAuthor ExtractAuthorObject(JObject authorObject)
     {
-        return new PLCoreOutputAuthor
-        {
-            name = authorObject[PackageJsonAuthorName].Value<string>(),
-            email = authorObject["email"]?.Value<string>(),
-            url = authorObject["url"]?.Value<string>(),
-        };
+        return PLCoreOutputAuthor.FromObject(
+            name: authorObject[PackageJsonAuthorName].Value<string>(),
+            email: authorObject["email"]?.Value<string>(),
+            url: authorObject["url"]?.Value<string>()
+        );
     }
 
     private Dictionary<string, string> AsDictionary(JObject obj)

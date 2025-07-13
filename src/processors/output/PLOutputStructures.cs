@@ -49,7 +49,7 @@ internal class PLOutputPackageVersion
     public Dictionary<string, string> vpmDependencies;
     public List<PLOutputSample> samples;
     public string changelogUrl;
-    public PLOutputAuthor author;
+    public object author;
     public string documentationUrl;
     public string license;
     public string vrchatVersion; // VRC-specific
@@ -71,12 +71,7 @@ internal class PLOutputPackageVersion
             vpmDependencies = version.vpmDependencies,
             samples = version.samples != null ? version.samples.Select(PLOutputSample.FromCore).ToList() : null,
             changelogUrl = version.changelogUrl,
-            author = new PLOutputAuthor
-            {
-                name = version.author.name,
-                email = version.author.email,
-                url = version.author.url,
-            },
+            author = version.author.Kind == PLCoreOutputAuthorKind.Object ? PLOutputAuthorObject.FromCore(version.author.AsObject()) : version.author.AsString(),
             documentationUrl = version.documentationUrl,
             license = version.license,
             vrchatVersion = version.vrchatVersion,
@@ -88,11 +83,21 @@ internal class PLOutputPackageVersion
     }
 }
 
-internal class PLOutputAuthor
+internal class PLOutputAuthorObject
 {
     public string name;
     public string email;
     public string url;
+
+    public static PLOutputAuthorObject FromCore(PLCoreOutputAuthorObject outputAuthorObject)
+    {
+        return new PLOutputAuthorObject
+        {
+            name = outputAuthorObject.name,
+            email = outputAuthorObject.email,
+            url = outputAuthorObject.url
+        };
+    }
 }
 
 internal class PLOutputSample

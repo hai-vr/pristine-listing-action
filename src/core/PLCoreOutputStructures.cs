@@ -47,6 +47,56 @@ public class PLCoreOutputPackageVersion
 
 public class PLCoreOutputAuthor
 {
+    public PLCoreOutputAuthorKind Kind { get; private init; }
+    private string _stringForm;
+    private PLCoreOutputAuthorObject _objectForm;
+
+    private PLCoreOutputAuthor() {}
+
+    public static PLCoreOutputAuthor FromString(string str)
+    {
+        return new PLCoreOutputAuthor
+        {
+            Kind = PLCoreOutputAuthorKind.String,
+            _stringForm = str
+        };
+    }
+
+    public static PLCoreOutputAuthor FromObject(string name, string email, string url)
+    {
+        return new PLCoreOutputAuthor
+        {
+            Kind = PLCoreOutputAuthorKind.Object,
+            _objectForm = new PLCoreOutputAuthorObject
+            {
+                name = name,
+                email = email,
+                url = url
+            }
+        };
+    }
+
+    public string AsString()
+    {
+        if (Kind != PLCoreOutputAuthorKind.String) throw new InvalidCastException();
+        return _stringForm;
+    }
+
+    public PLCoreOutputAuthorObject AsObject()
+    {
+        if (Kind != PLCoreOutputAuthorKind.Object) throw new InvalidCastException();
+        return _objectForm;
+    }
+}
+
+public enum PLCoreOutputAuthorKind
+{
+    String,
+    Object
+}
+
+public class PLCoreOutputAuthorObject
+{
     public string name;
     public string email;
     public string url;
