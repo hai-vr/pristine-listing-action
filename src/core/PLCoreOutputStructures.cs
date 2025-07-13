@@ -41,6 +41,7 @@ public class PLCoreOutputPackageVersion
     internal int downloadCount; // This is internal so that it doesn't get serialized to Json
     internal SemVersion semver;
     internal string? unitypackageUrl;
+    internal int? unitypackageDownloadCount;
 }
 
 public class PLCoreOutputAuthor

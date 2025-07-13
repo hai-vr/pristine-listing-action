@@ -18,6 +18,7 @@ internal class PLIntermediary
 internal class PLUnitypackageIntermediary
 {
     public string downloadUrl;
+    public int downloadCount;
 }
 
 internal class PLPackageToFetch

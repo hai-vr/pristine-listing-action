@@ -322,6 +322,7 @@ public class PLGatherer
         return new PLUnitypackageIntermediary
         {
             downloadUrl = unitypackageAssetNullable[AssetBrowserDownloadUrl].Value<string>(),
+            downloadCount = unitypackageAssetNullable[AssetDownloadCount].Value<int>()
         };
     }
 
@@ -351,7 +352,8 @@ public class PLGatherer
             
             downloadCount = downloadCount,
             semver = SemVersion.Parse(version, SemVersionStyles.Any),
-            unitypackageUrl = unityPackageNullable?.downloadUrl
+            unitypackageUrl = unityPackageNullable?.downloadUrl,
+            unitypackageDownloadCount = unityPackageNullable?.downloadCount
         };
     }
 

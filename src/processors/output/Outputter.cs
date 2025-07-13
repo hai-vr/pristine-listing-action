@@ -87,7 +87,8 @@ public class PLOutputter
             foreach (var version in versions.Values)
             {
                 var appendUnitypackageDownload = version.unitypackageUrl != null ? $" \\[[.unitypackage]({version.unitypackageUrl})\\]" : "";
-                sw.WriteLine($"  - {version.version} \\[[.zip]({version.url})\\]{appendUnitypackageDownload} -> *{version.downloadCount} downloads*");
+                var appendUnitypackageDownloadCount = version.unitypackageDownloadCount != null ? $" *({version.unitypackageDownloadCount})*" : "";
+                sw.WriteLine($"  - {version.version} \\[[.zip]({version.url})\\]{appendUnitypackageDownload} -> *{version.downloadCount} downloads*{appendUnitypackageDownloadCount}");
             }
             sw.WriteLine("");
         }
