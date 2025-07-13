@@ -57,3 +57,12 @@ Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listi
 - This is not fault-tolerant: The repositories in `input.json` should point to repositories that you trust or have control of.
   If a release of some repository contains garbage in its `package.json` then it may fail to execute.
   - This is not injection-tolerant: If a `package.json` contains javascript then it may execute in the browser webpage.
+
+## Local testing
+
+To test this project in your local machine, set up the Run configuration in your IDE so that it sets the environment variable
+called `IN__GITHUB_TOKEN` to a [GitHub Personal Access Token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#creating-a-fine-grained-personal-access-token)
+that you have generated.
+
+You can use a fine-grained personal access token that has rights to nothing (not even that repository); that token will have enough
+privileges to call GitHub's public APIs to get the paginated releases of a repository and download its Zip files.
