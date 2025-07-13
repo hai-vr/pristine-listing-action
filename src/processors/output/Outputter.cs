@@ -49,7 +49,7 @@ public class PLOutputter
         sw.WriteLine("");
         sw.WriteLine($"- id: {outputListing.id}");
         sw.WriteLine($"- name: {outputListing.name}");
-        if (outputListing.author != null) sw.WriteLine($"- author: {outputListing.author}");
+        sw.WriteLine($"- author: {outputListing.author}");
         sw.WriteLine($"- url: [{outputListing.url}]({outputListing.url})");
         sw.WriteLine("");
         foreach (var package in outputListing.packages)
@@ -98,7 +98,7 @@ public class PLOutputter
                 }
 
                 var author = firstUpm.author;
-                switch (author.Kind)
+                if (author != null)
                 {
                     case PLCoreOutputAuthorKind.String:
                         sw.WriteLine($"- author: {author.AsString()}");
@@ -112,6 +112,21 @@ public class PLOutputter
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
+                    switch (author.Kind)
+                    {
+                        case PLCoreOutputAuthorKind.String:
+                            sw.WriteLine($"- author: {author.AsString()}");
+                            break;
+                        case PLCoreOutputAuthorKind.Object:
+                            var authorObject = author.AsObject();
+                            sw.WriteLine($"- author:");
+                            sw.WriteLine($"  - name: {authorObject.name}");
+                            if (authorObject.email != null) sw.WriteLine($"  - email: {authorObject.email}");
+                            if (authorObject.url != null) sw.WriteLine($"  - url: [{authorObject.url}]({authorObject.url})");
+                            break;
+                        default:
+                            throw new ArgumentOutOfRangeException();
+                    }
                 }
                 sw.WriteLine($"- metadata:");
                 sw.WriteLine($"  - totalDownloadCount: {package.Value.totalDownloadCount}");
