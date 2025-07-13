@@ -59,12 +59,12 @@ public class PLOutputter
             sw.WriteLine("");
 
             var firstVersion = versions.Values.First();
+            // FIXME: displayName, description, and some other fields like author may contain injections, which will be rendered in HTML.
+            // This needs sanitizing.
             sw.WriteLine($"- displayName: {firstVersion.displayName}");
             sw.WriteLine($"- description: {firstVersion.description}");
-            sw.WriteLine($"- totalDownloadCount: {package.Value.totalDownloadCount}");
             if (firstVersion.changelogUrl != null) sw.WriteLine($"- changelogUrl: [{firstVersion.changelogUrl}]({firstVersion.changelogUrl})");
             if (firstVersion.documentationUrl != null) sw.WriteLine($"- documentationUrl: [{firstVersion.documentationUrl}]({firstVersion.documentationUrl})");
-            sw.WriteLine($"- repositoryUrl: [{package.Value.repositoryUrl}]({package.Value.repositoryUrl})");
             if (firstVersion.unity != null) sw.WriteLine($"- unity: {firstVersion.unity}");
             if (firstVersion.vrchatVersion != null) sw.WriteLine($"- vrchatVersion: {firstVersion.vrchatVersion}");
             if (firstVersion.dependencies != null && firstVersion.dependencies.Count > 0)
@@ -83,12 +83,17 @@ public class PLOutputter
                     sw.WriteLine($"  - {dep.Key} : {dep.Value}");
                 }
             }
+            sw.WriteLine($"- author: {firstVersion.author.name}");
+            sw.WriteLine($"- metadata:");
+            sw.WriteLine($"  - totalDownloadCount: {package.Value.totalDownloadCount}");
+            sw.WriteLine($"  - repositoryUrl: [{package.Value.repositoryUrl}]({package.Value.repositoryUrl})");
             sw.WriteLine($"- versions:");
             foreach (var version in versions.Values)
             {
                 var appendUnitypackageDownload = version.unitypackageUrl != null ? $" \\[[.unitypackage]({version.unitypackageUrl})\\]" : "";
                 var appendUnitypackageDownloadCount = version.unitypackageDownloadCount != null ? $" *({version.unitypackageDownloadCount})*" : "";
-                sw.WriteLine($"  - {version.version} \\[[.zip]({version.url})\\]{appendUnitypackageDownload} -> *{version.downloadCount} downloads*{appendUnitypackageDownloadCount}");
+                var versionFormatted = version.semver.IsRelease ? $"**{version.version}**" : version.version;
+                sw.WriteLine($"  - {versionFormatted} \\[[.zip]({version.url})\\]{appendUnitypackageDownload} -> *{version.downloadCount} downloads*{appendUnitypackageDownloadCount}");
             }
             sw.WriteLine("");
         }
