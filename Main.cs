@@ -1,5 +1,5 @@
 ﻿using System.Text;
-using Newtonsoft.Json;
+using Hai.PristineListing.Input;
 
 namespace Hai.PristineListing;
 
@@ -11,6 +11,7 @@ internal class Program
 
     private readonly PLGatherer _gatherer;
     private readonly PLOutputter _outputter;
+    private readonly PLInputParser _inputParser;
 
     public static async Task Main(string[] args)
     {
@@ -48,6 +49,7 @@ internal class Program
         _includeDownloadCount = includeDownloadCount;
         _devOnly = devOnly;
 
+        _inputParser = new PLInputParser();
         _gatherer = new PLGatherer(githubToken);
         _outputter = new PLOutputter(outputFile);
     }
@@ -57,17 +59,8 @@ internal class Program
         Directory.CreateDirectory("output");
         
         var inputJson = await File.ReadAllTextAsync(_inputFile, Encoding.UTF8);
-        var input = JsonConvert.DeserializeObject<PLInput>(inputJson, new JsonSerializerSettings
-        {
-            DefaultValueHandling = DefaultValueHandling.Populate
-        });
-        foreach (var product in input.products)
-        {
-            product.includePrereleases ??= input.settings.defaultIncludePrereleases;
-            product.onlyPackageNames ??= new List<string>();
-            if (product.mode is null or PLMode.Undefined) product.mode = input.settings.defaultMode;
-        }
-        
+        var input = _inputParser.Parse(inputJson);
+
         var outputListing = await _gatherer.DownloadAndAggregate(input);
 
         foreach (var outputListingPackage in outputListing.packages.Values)

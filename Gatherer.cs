@@ -3,6 +3,7 @@ using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
 using System.Text;
+using Hai.PristineListing.Core;
 using Newtonsoft.Json.Linq;
 using Semver;
 
@@ -28,7 +29,7 @@ internal class PLGatherer
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
     }
 
-    internal async Task<PLOutputListing> DownloadAndAggregate(PLInput input)
+    internal async Task<PLOutputListing> DownloadAndAggregate(PLCoreInput input)
     {
         var outputListing = NewOutputListing(input.listingData);
 
@@ -46,7 +47,7 @@ internal class PLGatherer
         return outputListing;
     }
 
-    private static PLOutputListing NewOutputListing(PLInputListingData listingData)
+    private static PLOutputListing NewOutputListing(PLCoreInputListingData listingData)
     {
         return new PLOutputListing
         {
@@ -58,7 +59,7 @@ internal class PLGatherer
         };
     }
 
-    private async Task<List<PLPackage>> ResolvePackagesOfProducts(List<PLProduct> products, PLSettings settings)
+    private async Task<List<PLPackage>> ResolvePackagesOfProducts(List<PLCoreInputProduct> products, PLCoreInputSettings settings)
     {
         var cts = new CancellationTokenSource();
         try
@@ -77,7 +78,7 @@ internal class PLGatherer
         }
     }
 
-    private async Task<List<PLPackage>> ResolvePackagesOfProduct(PLProduct product, PLSettings settings, CancellationTokenSource source)
+    private async Task<List<PLPackage>> ResolvePackagesOfProduct(PLCoreInputProduct product, PLCoreInputSettings settings, CancellationTokenSource source)
     {
         source.Token.ThrowIfCancellationRequested();
 
@@ -95,7 +96,7 @@ internal class PLGatherer
                 .Where(ThereAreAssets)
                 .Where(AtLeastOneOfTheAssetsIsZipFile);
 
-            var canHaveExcessiveMode = product.mode != PLMode.PackageJsonAssetOnly;
+            var canHaveExcessiveMode = product.mode != PLCoreInputMode.PackageJsonAssetOnly;
             if (!canHaveExcessiveMode || !settings.excessiveModeToleratesPackageJsonAssetMissing)
                 filtered = filtered.Where(AtLeastOneOfTheAssetsIsPackageJson);
             
@@ -154,18 +155,18 @@ internal class PLGatherer
         }
     }
 
-    private List<PLPackageToFetch> SplitIntoWork(List<JToken> relevantReleasesUns, PLMode? productMode)
+    private List<PLPackageToFetch> SplitIntoWork(List<JToken> relevantReleasesUns, PLCoreInputMode? productMode)
     {
         return relevantReleasesUns
             .SelectMany(relevantReleaseUns =>
             {
                 var assets = relevantReleaseUns[ReleaseAsset];
-                if (productMode != PLMode.PackageJsonAssetOnly)
+                if (productMode != PLCoreInputMode.PackageJsonAssetOnly)
                 {
                     var containsPackageJsonAsset = AtLeastOneOfTheAssetsIsPackageJson(relevantReleaseUns);
                     if (containsPackageJsonAsset)
                     {
-                        if (productMode == PLMode.ExcessiveWhenNeeded)
+                        if (productMode == PLCoreInputMode.ExcessiveWhenNeeded)
                         {
                             return UsePackageJson(assets, relevantReleaseUns);
                         }
