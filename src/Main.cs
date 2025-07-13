@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Hai.PristineListing.Gatherer;
 using Hai.PristineListing.Input;
+using Hai.PristineListing.Modifier;
 using Hai.PristineListing.Outputter;
 
 namespace Hai.PristineListing;
@@ -8,11 +9,11 @@ namespace Hai.PristineListing;
 internal class Program
 {
     private readonly string _inputFile;
-    private readonly bool _devOnly;
 
-    private readonly PLGatherer _gatherer;
-    private readonly PLOutputter _outputter;
     private readonly InputParser _inputParser;
+    private readonly PLGatherer _gatherer;
+    private readonly PLModifier _modifier;
+    private readonly PLOutputter _outputter;
 
     public static async Task Main(string[] args)
     {
@@ -43,10 +44,10 @@ internal class Program
     private Program(string githubToken, string inputFile, string outputFile, bool devOnly)
     {
         _inputFile = inputFile;
-        _devOnly = devOnly;
 
         _inputParser = new InputParser();
         _gatherer = new PLGatherer(githubToken);
+        _modifier = new PLModifier(devOnly);
         _outputter = new PLOutputter(outputFile);
     }
 
@@ -59,22 +60,7 @@ internal class Program
 
         var outputListing = await _gatherer.DownloadAndAggregate(input);
 
-        if (input.settings.includeDownloadCount)
-        {
-            foreach (var outputListingPackage in outputListing.packages.Values)
-            {
-                var totalDownloadCount = outputListingPackage.totalDownloadCount;
-                foreach (var version in outputListingPackage.versions.Values)
-                {
-                    var description = version.upmManifest.description ?? "";
-                    if (_devOnly)
-                    {
-                        version.upmManifest.displayName = $"{(version.upmManifest.displayName ?? "")} 🔽{version.downloadCount}/{totalDownloadCount}";
-                    }
-                    version.upmManifest.description = $"{description} (Downloaded {version.downloadCount} times)";
-                }
-            }
-        }
+        _modifier.Modify(input, outputListing);
 
         await _outputter.Write(outputListing);
     }
