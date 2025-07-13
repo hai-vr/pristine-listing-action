@@ -64,19 +64,19 @@ internal class Program
         var includeDownloadCount = input.settings.includeDownloadCount;
         foreach (var outputListingPackage in outputListing.packages.Values)
         {
-            var totalDownloadCount = outputListingPackage.versions.Values
-                .Select(version => version.downloadCount)
-                .Sum();
-            outputListingPackage.totalDownloadCount = totalDownloadCount;
-            
-            foreach (var version in outputListingPackage.versions.Values)
+            var totalDownloadCount = outputListingPackage.totalDownloadCount;
+
+            if (includeDownloadCount)
             {
-                var description = version.description ?? version.displayName;
-                if (_devOnly)
+                foreach (var version in outputListingPackage.versions.Values)
                 {
-                    if (includeDownloadCount) version.displayName = $"{version.displayName} 🔽{version.downloadCount}/{totalDownloadCount}";
+                    var description = version.description ?? "";
+                    if (_devOnly)
+                    {
+                        version.displayName = $"{version.displayName} 🔽{version.downloadCount}/{totalDownloadCount}";
+                    }
+                    version.description = $"{description} (Downloaded {version.downloadCount} times)";
                 }
-                version.description = includeDownloadCount ? $"{description} (Downloaded {version.downloadCount} times)" : description;
             }
         }
 

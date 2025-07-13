@@ -40,11 +40,13 @@ internal class PLOutputPackage
 
 internal class PLOutputPackageVersion
 {
+    // Do not change the order of properties, it makes it easier to diff them when serialized.
     public string name;
     public string displayName;
     public string version;
     public string unity;
     public string description;
+    public List<string> keywords; /* Rarely used, position does not matter. */
     public Dictionary<string, string> dependencies;
     public Dictionary<string, string> vpmDependencies;
     public List<PLOutputSample> samples;
@@ -52,11 +54,14 @@ internal class PLOutputPackageVersion
     public object author;
     public string documentationUrl;
     public string license;
-    public string vrchatVersion; // VRC-specific
+    public string licensesUrl; /* Rarely used, position does not matter. */
+    public string vrchatVersion;
     public string zipSHA256;
+    public bool? hideInEditor; /* Rarely used, position does not matter. */
+    public string unityRelease; /* Rarely used, position does not matter. */
     public string url;
-    public Dictionary<string, string> legacyFolders; // VRC-specific
-    public List<string> legacyPackages; // VRC-specific
+    public Dictionary<string, string> legacyFolders;
+    public List<string> legacyPackages;
 
     internal static PLOutputPackageVersion FromCore(PLCoreOutputPackageVersion version)
     {
@@ -78,7 +83,11 @@ internal class PLOutputPackageVersion
             zipSHA256 = version.zipSHA256,
             url = version.url,
             legacyFolders = version.legacyFolders,
-            legacyPackages = version.legacyPackages
+            legacyPackages = version.legacyPackages,
+            hideInEditor = version.hideInEditor,
+            keywords = version.keywords,
+            licensesUrl = version.licensesUrl,
+            unityRelease = version.unityRelease,
         };
     }
 }

@@ -15,31 +15,48 @@ public class PLCoreOutputPackage
 {
     public Dictionary<string, PLCoreOutputPackageVersion> versions;
 
-    internal int totalDownloadCount; // This is internal so that it doesn't get serialized to Json
+    internal int totalDownloadCount;
     internal string repositoryUrl;
 }
 
 public class PLCoreOutputPackageVersion
 {
-    public string name;
-    public string displayName;
-    public string version;
-    public string unity;
-    public string description;
-    public Dictionary<string, string> dependencies;
-    public Dictionary<string, string> vpmDependencies;
-    public List<PLCoreOutputSample> samples;
-    public string changelogUrl;
-    public PLCoreOutputAuthor author;
-    public string documentationUrl;
-    public string license;
-    public string vrchatVersion; // VRC-specific
-    public string zipSHA256;
-    public string url;
-    public Dictionary<string, string> legacyFolders; // VRC-specific
-    public List<string> legacyPackages; // VRC-specific
+    // Required properties
+    /*REQ*/ public string name;
+    /*REQ*/ public string version;
+    
+    // Recommended properties
+    /*rcm*/ public string description;
+    /*rcm*/ public string displayName;
+    /*rcm*/ public string unity;
+    
+    // Optional properties
+    /*opt*/ public PLCoreOutputAuthor author;
+    /*opt*/ public string changelogUrl;
+    /*opt*/ public Dictionary<string, string> dependencies;
+    /*opt*/ public List<PLCoreOutputSample> samples;
+    /*opt*/ public string documentationUrl;
+    /*opt*/ public string license;
 
-    internal int downloadCount; // This is internal so that it doesn't get serialized to Json
+    /*opt*/ public bool? hideInEditor;
+    /*opt*/ public List<string> keywords;
+    /*opt*/ public string licensesUrl;
+    /*opt*/ public string unityRelease;
+    
+    // VPM properties
+    /*VPM*/ public Dictionary<string, string> vpmDependencies;
+    
+    // VRC properties
+    /*VRC*/ public string vrchatVersion;
+    /*VRC*/ public Dictionary<string, string> legacyFolders;
+    /*VRC*/ public List<string> legacyPackages;
+    
+    // Listing-only properties
+    /*LIST*/ public string url;
+    /*VCC*/ public string zipSHA256;
+
+    // Metadata
+    internal int downloadCount;
     internal SemVersion semver;
     internal string? unitypackageUrl;
     internal int? unitypackageDownloadCount;
@@ -97,7 +114,7 @@ public enum PLCoreOutputAuthorKind
 
 public class PLCoreOutputAuthorObject
 {
-    public string name;
+    /*REQ*/ public string name;
     public string email;
     public string url;
 }

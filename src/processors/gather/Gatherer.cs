@@ -44,6 +44,14 @@ public class PLGatherer
             // owned by different people, then this case might crop up.
             .ToDictionary(package => package.versions.First().Value.name);
 
+        foreach (var outputListingPackage in outputListing.packages.Values)
+        {
+            var totalDownloadCount = outputListingPackage.versions.Values
+                .Select(version => version.downloadCount)
+                .Sum();
+            outputListingPackage.totalDownloadCount = totalDownloadCount;
+        }
+
         return outputListing;
     }
 
@@ -334,8 +342,8 @@ public class PLGatherer
         return new PLCoreOutputPackageVersion
         {
             name = package[PackageName].Value<string>(),
-            displayName = package["displayName"].Value<string>(),
-            version = version, // Was formerly: (string)releaseUns[ReleaseTagName]
+            displayName = package["displayName"]?.Value<string>(),
+            version = version,
             unity = package["unity"]?.Value<string>(),
             description = package["description"]?.Value<string>(),
             dependencies = AsDictionary(package["dependencies"]?.Value<JObject>()),
@@ -346,7 +354,7 @@ public class PLGatherer
                 description = token["description"].Value<string>(),
                 path = token["path"].Value<string>()
             }).ToList(),
-            author = ExtractAuthorUnionField(package["author"]),
+            author = package["author"] != null ? ExtractAuthorUnionField(package["author"]) : null,
             url = downloadUrl,
             documentationUrl = package["documentationUrl"]?.Value<string>(),
             changelogUrl = package["changelogUrl"]?.Value<string>(),
@@ -356,6 +364,11 @@ public class PLGatherer
             vrchatVersion = package["vrchatVersion"]?.Value<string>(),
             legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
             legacyPackages = package["legacyPackages"]?.Value<JArray>().Select(token => token.Value<string>()).ToList(),
+            
+            hideInEditor = package["hideInEditor"]?.Value<bool>(),
+            keywords = package["keywords"]?.Value<JArray>().Select(token => token.Value<string>()).ToList(),
+            licensesUrl = package["licensesUrl"]?.Value<string>(),
+            unityRelease = package["unityRelease"]?.Value<string>(),
             
             downloadCount = downloadCount,
             semver = SemVersion.Parse(version, SemVersionStyles.Any),

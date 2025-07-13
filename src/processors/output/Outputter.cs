@@ -49,7 +49,7 @@ public class PLOutputter
         sw.WriteLine("");
         sw.WriteLine($"- id: {outputListing.id}");
         sw.WriteLine($"- name: {outputListing.name}");
-        sw.WriteLine($"- author: {outputListing.author}");
+        if (outputListing.author != null) sw.WriteLine($"- author: {outputListing.author}");
         sw.WriteLine($"- url: [{outputListing.url}]({outputListing.url})");
         sw.WriteLine("");
         foreach (var package in outputListing.packages)
@@ -61,11 +61,22 @@ public class PLOutputter
             var firstVersion = versions.Values.First();
             // FIXME: displayName, description, and some other fields like author may contain injections, which will be rendered in HTML.
             // This needs sanitizing.
-            sw.WriteLine($"- displayName: {firstVersion.displayName}");
-            sw.WriteLine($"- description: {firstVersion.description}");
+            if (firstVersion.displayName != null) sw.WriteLine($"- displayName: {firstVersion.displayName}");
+            if (firstVersion.description != null) sw.WriteLine($"- description: {firstVersion.description}");
+            if (firstVersion.keywords != null && firstVersion.keywords.Count > 0)
+            {
+                sw.WriteLine($"- keywords:");
+                foreach (var keyword in firstVersion.keywords)
+                {
+                    sw.WriteLine($"  - {keyword}");
+                }
+            }
             if (firstVersion.changelogUrl != null) sw.WriteLine($"- changelogUrl: [{firstVersion.changelogUrl}]({firstVersion.changelogUrl})");
             if (firstVersion.documentationUrl != null) sw.WriteLine($"- documentationUrl: [{firstVersion.documentationUrl}]({firstVersion.documentationUrl})");
+            if (firstVersion.license != null) sw.WriteLine($"- license: {firstVersion.license}");
+            if (firstVersion.licensesUrl != null) sw.WriteLine($"- licensesUrl: [{firstVersion.licensesUrl}]({firstVersion.licensesUrl})");
             if (firstVersion.unity != null) sw.WriteLine($"- unity: {firstVersion.unity}");
+            if (firstVersion.unityRelease != null) sw.WriteLine($"- unity: {firstVersion.unityRelease}");
             if (firstVersion.vrchatVersion != null) sw.WriteLine($"- vrchatVersion: {firstVersion.vrchatVersion}");
             if (firstVersion.dependencies != null && firstVersion.dependencies.Count > 0)
             {
@@ -95,7 +106,7 @@ public class PLOutputter
                     sw.WriteLine($"- author:");
                     sw.WriteLine($"  - name: {authorObject.name}");
                     if (authorObject.email != null) sw.WriteLine($"  - email: {authorObject.email}");
-                    if (authorObject.url != null) sw.WriteLine($"  - url: {authorObject.url}");
+                    if (authorObject.url != null) sw.WriteLine($"  - url: [{authorObject.url}]({authorObject.url})");
                     break;
                 default:
                     throw new ArgumentOutOfRangeException();
