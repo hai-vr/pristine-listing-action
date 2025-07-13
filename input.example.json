@@ -7,8 +7,9 @@
     },
     "settings" : {
         "defaultIncludePrereleases" : true,
+        "defaultMode" : "PackageJsonAssetOnly",
         "excessiveModeToleratesPackageJsonAssetMissing" : true,
-        "defaultMode" : "PackageJsonAssetOnly"
+        "includeDownloadCount" : true
     },
     "products": [
         { "repository" : "hai-vr/animation-viewer-vcc" },

@@ -25,7 +25,8 @@ public class InputParser
             },
             settings = new PLCoreInputSettings
             {
-                excessiveModeToleratesPackageJsonAssetMissing = input.settings.excessiveModeToleratesPackageJsonAssetMissing
+                excessiveModeToleratesPackageJsonAssetMissing = input.settings.excessiveModeToleratesPackageJsonAssetMissing,
+                includeDownloadCount = input.settings.includeDownloadCount
             },
             products = input.products
                 .Select(product => new PLCoreInputProduct
@@ -51,10 +52,12 @@ internal class PLInputSettings
 {
     [DefaultValue(true)]
     public bool defaultIncludePrereleases;
-    [DefaultValue(true)]
-    public bool excessiveModeToleratesPackageJsonAssetMissing;
     [DefaultValue(1)] // PackageJsonAssetOnly
     public PLInputMode defaultMode;
+    [DefaultValue(true)]
+    public bool excessiveModeToleratesPackageJsonAssetMissing;
+    [DefaultValue(false)]
+    public bool includeDownloadCount;
 }
 
 internal class PLInputListingData

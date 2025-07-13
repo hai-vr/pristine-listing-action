@@ -6,11 +6,6 @@ on:
       gh_token:
         required: true
     inputs:
-      includeDownloadCount:
-        description: 'If true, this will append the number of downloads of the package to the package description'
-        default: false
-        required: false
-        type: boolean
       devonly:
         description: 'If true, this is the DEVELOPERONLY branch, to test new functions of this generator'
         default: false
@@ -53,7 +48,6 @@ jobs:
     - name: Run project
       env:
         IN__GITHUB_TOKEN: ${{ secrets.gh_token }}
-        IN__INCLUDE_DOWNLOAD_COUNT: ${{ inputs.includeDownloadCount }}
         IN__DEVONLY: ${{ inputs.devonly }}
       run: dotnet run --project ${{ env.subfolder }}/pristine-listing-action.csproj
 

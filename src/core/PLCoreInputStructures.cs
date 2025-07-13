@@ -10,6 +10,7 @@ public class PLCoreInput
 public class PLCoreInputSettings
 {
     public bool excessiveModeToleratesPackageJsonAssetMissing;
+    public bool includeDownloadCount;
 }
 
 public class PLCoreInputListingData

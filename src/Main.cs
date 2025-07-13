@@ -8,7 +8,6 @@ namespace Hai.PristineListing;
 internal class Program
 {
     private readonly string _inputFile;
-    private readonly bool _includeDownloadCount;
     private readonly bool _devOnly;
 
     private readonly PLGatherer _gatherer;
@@ -24,10 +23,8 @@ internal class Program
             var githubToken = EnvVar("IN__GITHUB_TOKEN");
             if (string.IsNullOrWhiteSpace(githubToken)) throw new ArgumentException("IN__GITHUB_TOKEN env var contains nothing");
 
-            var includeDownloadCount = false;
             var devOnly = false;
 
-            if (bool.TryParse(EnvVar("IN__INCLUDE_DOWNLOAD_COUNT"), out var doIncludeDownloadCount)) includeDownloadCount = doIncludeDownloadCount;
             if (bool.TryParse(EnvVar("IN__DEVONLY"), out var doDevOnly)) devOnly = doDevOnly;
             
             if (devOnly) Console.WriteLine("We're in DEVELOPERONLY mode.");
@@ -35,7 +32,7 @@ internal class Program
             var inputFile = "input.json";
             var outputFile = "index.json";
 
-            await new Program(githubToken, inputFile, $"output/{outputFile}", includeDownloadCount, devOnly).Run();
+            await new Program(githubToken, inputFile, $"output/{outputFile}", devOnly).Run();
         }
         catch (Exception e)
         {
@@ -45,10 +42,9 @@ internal class Program
         }
     }
 
-    private Program(string githubToken, string inputFile, string outputFile, bool includeDownloadCount, bool devOnly)
+    private Program(string githubToken, string inputFile, string outputFile, bool devOnly)
     {
         _inputFile = inputFile;
-        _includeDownloadCount = includeDownloadCount;
         _devOnly = devOnly;
 
         _inputParser = new InputParser();
@@ -65,6 +61,7 @@ internal class Program
 
         var outputListing = await _gatherer.DownloadAndAggregate(input);
 
+        var includeDownloadCount = input.settings.includeDownloadCount;
         foreach (var outputListingPackage in outputListing.packages.Values)
         {
             var totalDownloadCount = outputListingPackage.versions.Values
@@ -77,9 +74,9 @@ internal class Program
                 var description = version.description ?? version.displayName;
                 if (_devOnly)
                 {
-                    if (_includeDownloadCount) version.displayName = $"{version.displayName} 🔽{version.downloadCount}/{totalDownloadCount}";
+                    if (includeDownloadCount) version.displayName = $"{version.displayName} 🔽{version.downloadCount}/{totalDownloadCount}";
                 }
-                version.description = _includeDownloadCount ? $"{description} (Downloaded {version.downloadCount} times)" : description;
+                version.description = includeDownloadCount ? $"{description} (Downloaded {version.downloadCount} times)" : description;
             }
         }
 
