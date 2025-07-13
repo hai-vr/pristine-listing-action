@@ -61,6 +61,7 @@ internal class PLOutputPackageVersion
     public string unityRelease; /* Rarely used, position does not matter. */
     public string url;
     public Dictionary<string, string> legacyFolders;
+    public Dictionary<string, string> legacyFiles;
     public List<string> legacyPackages;
 
     internal static PLOutputPackageVersion FromCore(PLCoreOutputPackageVersion version)
@@ -86,6 +87,7 @@ internal class PLOutputPackageVersion
             zipSHA256 = version.listingConvention.zipSHA256,
             url = version.listingConvention.url,
             legacyFolders = version.vrcConvention.legacyFolders,
+            legacyFiles = version.vrcConvention.legacyFiles,
             legacyPackages = version.vrcConvention.legacyPackages,
             hideInEditor = upmManifest.hideInEditor,
             keywords = upmManifest.keywords,
