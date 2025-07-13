@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace Hai.PristineListing.Input;
 
-public class PLInputParser
+public class InputParser
 {
     public PLCoreInput Parse(string inputJson)
     {

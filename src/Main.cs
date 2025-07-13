@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Hai.PristineListing.Gatherer;
 using Hai.PristineListing.Input;
+using Hai.PristineListing.Outputter;
 
 namespace Hai.PristineListing;
 
@@ -12,7 +13,7 @@ internal class Program
 
     private readonly PLGatherer _gatherer;
     private readonly PLOutputter _outputter;
-    private readonly PLInputParser _inputParser;
+    private readonly InputParser _inputParser;
 
     public static async Task Main(string[] args)
     {
@@ -50,7 +51,7 @@ internal class Program
         _includeDownloadCount = includeDownloadCount;
         _devOnly = devOnly;
 
-        _inputParser = new PLInputParser();
+        _inputParser = new InputParser();
         _gatherer = new PLGatherer(githubToken);
         _outputter = new PLOutputter(outputFile);
     }

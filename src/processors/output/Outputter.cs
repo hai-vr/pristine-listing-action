@@ -4,7 +4,7 @@ using Hai.PristineListing.Core;
 using Markdig;
 using Newtonsoft.Json;
 
-namespace Hai.PristineListing;
+namespace Hai.PristineListing.Outputter;
 
 public class PLOutputter
 {
