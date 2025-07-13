@@ -22,18 +22,11 @@ public class PLCoreOutputPackage
 public class PLCoreOutputPackageVersion
 {
     public PLCoreOutputPackageUPMSpecification upmManifest;
-    
-    // VPM properties
-    /*VPM*/ public Dictionary<string, string> vpmDependencies;
-    
-    // VRC properties
-    /*VRC*/ public string vrchatVersion;
-    /*VRC*/ public Dictionary<string, string> legacyFolders;
-    /*VRC*/ public List<string> legacyPackages;
+    public PLCoreOutputPackageVPMConvention vpmConvention;
+    public PLCoreOutputPackageVRCConvention vrcConvention;
+    public PLCoreOutputPackageListingConvention listingConvention;
     
     // Listing-only properties
-    /*LIST*/ public string url;
-    /*VCC*/ public string zipSHA256;
 
     // Metadata
     internal int downloadCount;
@@ -65,6 +58,24 @@ public class PLCoreOutputPackageUPMSpecification
     /*opt*/ public List<string> keywords;
     /*opt*/ public string licensesUrl;
     /*opt*/ public string unityRelease;
+}
+
+public class PLCoreOutputPackageVPMConvention
+{
+    /*opt*/ public Dictionary<string, string> vpmDependencies;
+}
+
+public class PLCoreOutputPackageVRCConvention
+{
+    public string vrchatVersion;
+    /*opt*/ public Dictionary<string, string> legacyFolders;
+    /*opt*/ public List<string> legacyPackages;
+}
+
+public class PLCoreOutputPackageListingConvention
+{
+    public string url;
+    /*opt*/ public string zipSHA256;
 }
 
 public class PLCoreOutputAuthor

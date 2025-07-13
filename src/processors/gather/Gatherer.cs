@@ -370,15 +370,21 @@ public class PLGatherer
                 licensesUrl = package["licensesUrl"]?.Value<string>(),
                 unityRelease = package["unityRelease"]?.Value<string>(),
             },
-            
-            vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>()),
-            url = downloadUrl,
-            zipSHA256 = intermediary.hashHexNullableIfJson,
-            
-            vrchatVersion = package["vrchatVersion"]?.Value<string>(),
-            legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
-            legacyPackages = package["legacyPackages"]?.Value<JArray>().Select(token => token.Value<string>()).ToList(),
-            
+            vpmConvention = new PLCoreOutputPackageVPMConvention
+            {
+                vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>())
+            },
+            vrcConvention = new PLCoreOutputPackageVRCConvention
+            {
+                vrchatVersion = package["vrchatVersion"]?.Value<string>(),
+                legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
+                legacyPackages = package["legacyPackages"]?.Value<JArray>().Select(token => token.Value<string>()).ToList()
+            },
+            listingConvention = new PLCoreOutputPackageListingConvention
+            {
+                url = downloadUrl,
+                zipSHA256 = intermediary.hashHexNullableIfJson,
+            },
             
             downloadCount = downloadCount,
             semver = SemVersion.Parse(version, SemVersionStyles.Any),
@@ -407,12 +413,12 @@ public class PLGatherer
         );
     }
 
-    private Dictionary<string, string> AsDictionary(JObject obj)
+    private Dictionary<string, string> AsDictionary(JObject objNullable)
     {
-        if (obj == null) return null;
+        if (objNullable == null) return null;
         
         var legacyFolders = new Dictionary<string, string>();
-        foreach (var keyValuePair in obj)
+        foreach (var keyValuePair in objNullable)
         {
             legacyFolders[keyValuePair.Key] = keyValuePair.Value.Value<string>();
         }

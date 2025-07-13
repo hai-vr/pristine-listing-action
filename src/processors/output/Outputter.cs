@@ -79,7 +79,7 @@ public class PLOutputter
                 if (firstUpm.licensesUrl != null) sw.WriteLine($"- licensesUrl: [{firstUpm.licensesUrl}]({firstUpm.licensesUrl})");
                 if (firstUpm.unity != null) sw.WriteLine($"- unity: {firstUpm.unity}");
                 if (firstUpm.unityRelease != null) sw.WriteLine($"- unity: {firstUpm.unityRelease}");
-                if (firstVersion.vrchatVersion != null) sw.WriteLine($"- vrchatVersion: {firstVersion.vrchatVersion}");
+                if (firstVersion.vrcConvention.vrchatVersion != null) sw.WriteLine($"- vrchatVersion: {firstVersion.vrcConvention.vrchatVersion}");
                 if (firstUpm.dependencies != null && firstUpm.dependencies.Count > 0)
                 {
                     sw.WriteLine("- dependencies:");
@@ -88,10 +88,10 @@ public class PLOutputter
                         sw.WriteLine($"  - {dep.Key} : {dep.Value}");
                     }
                 }
-                if (firstVersion.vpmDependencies != null && firstVersion.vpmDependencies.Count > 0)
+                if (firstVersion.vpmConvention.vpmDependencies != null && firstVersion.vpmConvention.vpmDependencies.Count > 0)
                 {
                     sw.WriteLine("- vpmDependencies:");
-                    foreach (var dep in firstVersion.vpmDependencies)
+                    foreach (var dep in firstVersion.vpmConvention.vpmDependencies)
                     {
                         sw.WriteLine($"  - {dep.Key} : {dep.Value}");
                     }
@@ -124,7 +124,7 @@ public class PLOutputter
                 var appendUnitypackageDownload = version.unitypackageUrl != null ? $" \\[[.unitypackage]({version.unitypackageUrl})\\]" : "";
                 var appendUnitypackageDownloadCount = version.unitypackageDownloadCount != null ? $" *({version.unitypackageDownloadCount})*" : "";
                 var versionFormatted = version.semver.IsRelease ? $"**{version.upmManifest.version}**" : version.upmManifest.version;
-                sw.WriteLine($"  - {versionFormatted} \\[[.zip]({version.url})\\]{appendUnitypackageDownload} -> *{version.downloadCount} downloads*{appendUnitypackageDownloadCount}");
+                sw.WriteLine($"  - {versionFormatted} \\[[.zip]({version.listingConvention.url})\\]{appendUnitypackageDownload} -> *{version.downloadCount} downloads*{appendUnitypackageDownloadCount}");
             }
             sw.WriteLine("");
         }
