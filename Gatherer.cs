@@ -22,7 +22,7 @@ public class PLGatherer
 
     private readonly HttpClient _http;
 
-    internal PLGatherer(string githubToken)
+    public PLGatherer(string githubToken)
     {
         _http = new HttpClient();
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);

@@ -6,23 +6,24 @@ using Newtonsoft.Json;
 
 namespace Hai.PristineListing;
 
-internal class PLOutputter
+public class PLOutputter
 {
     private readonly string _outputIndexJson;
 
-    internal PLOutputter(string outputIndexJson)
+    public PLOutputter(string outputIndexJson)
     {
         _outputIndexJson = outputIndexJson;
     }
 
-    internal async Task Write(PLCoreOutputListing outputListing)
+    public async Task Write(PLCoreOutputListing outputListing)
     {
         await Task.WhenAll(new[] { CreateListing(outputListing), CreateWebpage(outputListing) });
     }
 
     private async Task CreateListing(PLCoreOutputListing outputListing)
     {
-        var outputJson = JsonConvert.SerializeObject(outputListing, Formatting.Indented, new JsonSerializerSettings
+        var asOutput = PLOutputListing.FromCore(outputListing);
+        var outputJson = JsonConvert.SerializeObject(asOutput, Formatting.Indented, new JsonSerializerSettings
         {
             NullValueHandling = NullValueHandling.Ignore
         });
