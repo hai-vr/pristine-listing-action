@@ -41,7 +41,6 @@ The following [workflow call inputs](https://docs.github.com/en/actions/referenc
   - The contents of the `package.json` file is read from the assets of the release.
   - Similarly to [bdunderscore/vpm-repo-list-generator](https://github.com/bdunderscore/vpm-repo-list-generator)
     we don't calculate the `zipSHA256` by default; however the code to do this is implemented.
-- Information about `"samples"` in the package.json is not exposed to the repository listing.
 - The listing correctly aggregates [UPM package manifests that define the `author` field as `string`](https://docs.unity3d.com/Manual/upm-manifestPkg.html#:~:text=author,Object%20or%20string).
 - The description is modified with the number of downloads of the last version appended to it, if the workflow input `includeDownloadCount` is set to true.
 - The generated web page is rudimentary and not meant for public browsing.

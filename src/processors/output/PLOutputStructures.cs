@@ -47,7 +47,7 @@ internal class PLOutputPackageVersion
     public string description;
     public Dictionary<string, string> dependencies;
     public Dictionary<string, string> vpmDependencies;
-    // public List<PLSamples> samples;
+    public List<PLOutputSample> samples;
     public string changelogUrl;
     public PLOutputAuthor author;
     public string documentationUrl;
@@ -69,7 +69,7 @@ internal class PLOutputPackageVersion
             description = version.description,
             dependencies = version.dependencies,
             vpmDependencies = version.vpmDependencies,
-            // samples = ...
+            samples = version.samples != null ? version.samples.Select(PLOutputSample.FromCore).ToList() : null,
             changelogUrl = version.changelogUrl,
             author = new PLOutputAuthor
             {
@@ -100,4 +100,14 @@ internal class PLOutputSample
     public string displayName;
     public string description;
     public string path;
+
+    public static PLOutputSample FromCore(PLCoreOutputSample outputSample)
+    {
+        return new PLOutputSample
+        {
+            displayName = outputSample.displayName,
+            description = outputSample.description,
+            path = outputSample.path
+        };
+    }
 }

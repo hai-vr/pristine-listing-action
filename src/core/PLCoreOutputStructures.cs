@@ -28,7 +28,7 @@ public class PLCoreOutputPackageVersion
     public string description;
     public Dictionary<string, string> dependencies;
     public Dictionary<string, string> vpmDependencies;
-    // public List<PLSamples> samples;
+    public List<PLCoreOutputSample> samples;
     public string changelogUrl;
     public PLCoreOutputAuthor author;
     public string documentationUrl;

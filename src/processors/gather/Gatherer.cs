@@ -340,6 +340,12 @@ public class PLGatherer
             description = package["description"]?.Value<string>(),
             dependencies = AsDictionary(package["dependencies"]?.Value<JObject>()),
             vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>()),
+            samples = package["samples"]?.Value<JArray>().Select(token => new PLCoreOutputSample
+            {
+                displayName = token["displayName"].Value<string>(),
+                description = token["description"].Value<string>(),
+                path = token["path"].Value<string>()
+            }).ToList(),
             author = ExtractAuthorUnionField(package["author"]),
             url = downloadUrl,
             documentationUrl = package["documentationUrl"]?.Value<string>(),
