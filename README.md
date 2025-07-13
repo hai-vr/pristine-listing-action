@@ -27,13 +27,22 @@ The following [workflow call inputs](https://docs.github.com/en/actions/referenc
 
 ### Settings
 
-- `defaultMode` enum:
+- `defaultIncludePrereleases` bool: By default, include prereleases. 
+- `defaultMode` string enum: By default:
   - `PackageJsonAssetOnly`: Only use the `package.json` asset of the release to extract information.
   - `ExcessiveWhenNeeded`: Use the `package.json` asset of the release to extract information; if there's none, try to download the zip and read the `package.json` file in that zip.
   - `ExcessiveAlways`: Always download the zip and read the `package.json` file in that zip.
   - Additional notes:
     - If the zip is downloaded, the value of `zipSHA256` will be calculated.
     - If the zip is not downloaded, it will not calculate any `zipSHA256` value (see [Differences](#differences) section below).
+- `excessiveModeToleratesPackageJsonAssetMissing` bool: If true, when running excessive mode, download the zip even if there is no `package.json` asset in the release.
+- `includeDownloadCount` bool: Append the number of downloads to the description of that version.
+
+### Include or Exclude packages
+
+- If the body of GitHub release notes contains the substring `$\texttt{Hidden}$` then that release is ignored.
+- If a given product in `input.json` has `includePrereleases` set to false, then pre-releases will not be included.
+- If a given product in `input.json` has `onlyPackageNames` set to a non-empty list of strings, then only package names that match it will be included.
 
 ## Differences
 
@@ -42,12 +51,10 @@ The following [workflow call inputs](https://docs.github.com/en/actions/referenc
   - Similarly to [bdunderscore/vpm-repo-list-generator](https://github.com/bdunderscore/vpm-repo-list-generator)
     we don't calculate the `zipSHA256` by default; however the code to do this is implemented.
 - The listing correctly aggregates [UPM package manifests that define the `author` field as `string`](https://docs.unity3d.com/Manual/upm-manifestPkg.html#:~:text=author,Object%20or%20string).
-- The description is modified with the number of downloads of the last version appended to it, if the workflow input `includeDownloadCount` is set to true.
-- The generated web page is rudimentary and not meant for public browsing.
+- The generated web page is rudimentary and not meant for browsing by general users.
 - Caching is not implemented, so this will cause all `package.json` to be downloaded every time this action is run.
 
-#### Include or Exclude packages
+## Other notes
 
-- If the body of GitHub release notes contains the substring `$\texttt{Hidden}$` then that release is ignored.
-- If a given product in `input.json` has `includePrereleases` set to false, then pre-releases will not be included.
-- If a given product in `input.json` has `onlyPackageNames` set to a non-empty list of strings, then only package names that match it will be included.
+- This supports GitHub releases that contain multiple different package assets within the same release.
+- This does not currently handle versions of a given package spread across multiple repositories.
