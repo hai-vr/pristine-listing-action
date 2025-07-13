@@ -37,6 +37,7 @@ public class PLCoreOutputPackageVersion
     public string zipSHA256;
     public string url;
     public Dictionary<string, string> legacyFolders; // VRC-specific
+    public List<string> legacyPackages; // VRC-specific
 
     internal int downloadCount; // This is internal so that it doesn't get serialized to Json
     internal SemVersion semver;

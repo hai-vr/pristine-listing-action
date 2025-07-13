@@ -56,6 +56,7 @@ internal class PLOutputPackageVersion
     public string zipSHA256;
     public string url;
     public Dictionary<string, string> legacyFolders; // VRC-specific
+    public List<string> legacyPackages; // VRC-specific
 
     internal static PLOutputPackageVersion FromCore(PLCoreOutputPackageVersion version)
     {
@@ -81,7 +82,8 @@ internal class PLOutputPackageVersion
             vrchatVersion = version.vrchatVersion,
             zipSHA256 = version.zipSHA256,
             url = version.url,
-            legacyFolders = version.legacyFolders
+            legacyFolders = version.legacyFolders,
+            legacyPackages = version.legacyPackages
         };
     }
 }

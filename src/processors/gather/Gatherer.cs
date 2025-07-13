@@ -349,6 +349,7 @@ public class PLGatherer
             
             vrchatVersion = package["vrchatVersion"]?.Value<string>(),
             legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
+            legacyPackages = package["legacyPackages"]?.Value<JArray>().Select(token => token.Value<string>()).ToList(),
             
             downloadCount = downloadCount,
             semver = SemVersion.Parse(version, SemVersionStyles.Any),
