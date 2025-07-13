@@ -40,7 +40,7 @@ Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listi
 
 ## Differences
 
-- By default, we don't download the zip file of the package itself, the `defaultMode` setting is changed.
+- By default, we don't download the zip file of the package itself, unless the `defaultMode` setting is changed.
   - The contents of the `package.json` file is read from the assets of the release.
   - Similarly to [bdunderscore/vpm-repo-list-generator](https://github.com/bdunderscore/vpm-repo-list-generator)
     we don't calculate the `zipSHA256` by default; however the code to do this is implemented.
