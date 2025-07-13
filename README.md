@@ -13,10 +13,11 @@ You should not use this repository as a workflow action unless you fork it first
 
 ### Example
 
-Repositories are defined in the `input.json` file.
+Repositories are defined in a file called `input.json` at the root of the repository.
 
-Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listing/blob/main/.github/workflows/build-listing.yml)
-for an example of a repository that uses this.
+You can find an example in the [input.example.json](input.example.json) file, which needs to be renamed.
+
+Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listing/blob/main/.github/workflows/build-listing.yml) for an example of a repository that uses this.
 
 ### Settings
 
