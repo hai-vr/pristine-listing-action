@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
+using Hai.PristineListing.Core;
 using Markdig;
 using Newtonsoft.Json;
 
@@ -14,12 +15,12 @@ internal class PLOutputter
         _outputIndexJson = outputIndexJson;
     }
 
-    internal async Task Write(PLOutputListing outputListing)
+    internal async Task Write(PLCoreOutputListing outputListing)
     {
         await Task.WhenAll(new[] { CreateListing(outputListing), CreateWebpage(outputListing) });
     }
 
-    private async Task CreateListing(PLOutputListing outputListing)
+    private async Task CreateListing(PLCoreOutputListing outputListing)
     {
         var outputJson = JsonConvert.SerializeObject(outputListing, Formatting.Indented, new JsonSerializerSettings
         {
@@ -30,7 +31,7 @@ internal class PLOutputter
     }
 
     [SuppressMessage("ReSharper", "MethodHasAsyncOverload")]
-    private async Task CreateWebpage(PLOutputListing outputListing)
+    private async Task CreateWebpage(PLCoreOutputListing outputListing)
     {
         var sw = new StringWriter();
         // FIXME: Yes, this needs to be replaced.

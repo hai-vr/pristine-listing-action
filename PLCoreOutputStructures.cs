@@ -1,25 +1,25 @@
 ﻿using Semver;
 
-namespace Hai.PristineListing;
+namespace Hai.PristineListing.Core;
 
-public class PLOutputListing
+public class PLCoreOutputListing
 {
     public string name;
     public string author;
     public string url;
     public string id;
-    public Dictionary<string, PLPackage> packages;
+    public Dictionary<string, PLCoreOutputPackage> packages;
 }
 
-public class PLPackage
+public class PLCoreOutputPackage
 {
-    public Dictionary<string, PLPackageVersion> versions;
+    public Dictionary<string, PLCoreOutputPackageVersion> versions;
 
     internal int totalDownloadCount; // This is internal so that it doesn't get serialized to Json
     internal string repositoryUrl;
 }
 
-public class PLPackageVersion
+public class PLCoreOutputPackageVersion
 {
     public string name;
     public string displayName;
@@ -30,7 +30,7 @@ public class PLPackageVersion
     public Dictionary<string, string> vpmDependencies;
     // public List<PLSamples> samples;
     public string changelogUrl;
-    public PLAuthor author;
+    public PLCoreOutputAuthor author;
     public string documentationUrl;
     public string license;
     public string vrchatVersion; // VRC-specific
@@ -43,14 +43,14 @@ public class PLPackageVersion
     internal string? unitypackageUrl;
 }
 
-public class PLAuthor
+public class PLCoreOutputAuthor
 {
     public string name;
     public string email;
     public string url;
 }
 
-public class PLSample
+public class PLCoreOutputSample
 {
     public string displayName;
     public string description;

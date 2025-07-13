@@ -7,9 +7,9 @@ using Hai.PristineListing.Core;
 using Newtonsoft.Json.Linq;
 using Semver;
 
-namespace Hai.PristineListing;
+namespace Hai.PristineListing.Gatherer;
 
-internal class PLGatherer
+public class PLGatherer
 {
     private const string ReleaseAsset = "assets";
     private const string AssetName = "name";
@@ -29,7 +29,7 @@ internal class PLGatherer
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
     }
 
-    internal async Task<PLOutputListing> DownloadAndAggregate(PLCoreInput input)
+    public async Task<PLCoreOutputListing> DownloadAndAggregate(PLCoreInput input)
     {
         var outputListing = NewOutputListing(input.listingData);
 
@@ -47,19 +47,19 @@ internal class PLGatherer
         return outputListing;
     }
 
-    private static PLOutputListing NewOutputListing(PLCoreInputListingData listingData)
+    private static PLCoreOutputListing NewOutputListing(PLCoreInputListingData listingData)
     {
-        return new PLOutputListing
+        return new PLCoreOutputListing
         {
             name = listingData.name,
             author = listingData.author,
             url = listingData.url,
             id = listingData.id,
-            packages = new Dictionary<string, PLPackage>()
+            packages = new Dictionary<string, PLCoreOutputPackage>()
         };
     }
 
-    private async Task<List<PLPackage>> ResolvePackagesOfProducts(List<PLCoreInputProduct> products, PLCoreInputSettings settings)
+    private async Task<List<PLCoreOutputPackage>> ResolvePackagesOfProducts(List<PLCoreInputProduct> products, PLCoreInputSettings settings)
     {
         var cts = new CancellationTokenSource();
         try
@@ -78,7 +78,7 @@ internal class PLGatherer
         }
     }
 
-    private async Task<List<PLPackage>> ResolvePackagesOfProduct(PLCoreInputProduct product, PLCoreInputSettings settings, CancellationTokenSource source)
+    private async Task<List<PLCoreOutputPackage>> ResolvePackagesOfProduct(PLCoreInputProduct product, PLCoreInputSettings settings, CancellationTokenSource source)
     {
         source.Token.ThrowIfCancellationRequested();
 
@@ -104,7 +104,7 @@ internal class PLGatherer
                 .Where(IfThereIsABodyThenItDoesNotContainTheHiddenTag)
                 .ToList();
             
-            var packageNameToPackage = new Dictionary<string, PLPackage>();
+            var packageNameToPackage = new Dictionary<string, PLCoreOutputPackage>();
 
             // ## Some repositories have multiple different packages within the same release.
             // When this may happen, the assets of that release has no package.json asset.
@@ -127,9 +127,9 @@ internal class PLGatherer
                     {
                         if (!packageNameToPackage.TryGetValue(packageVersion.name, out var ourPackage))
                         {
-                            ourPackage = new PLPackage
+                            ourPackage = new PLCoreOutputPackage
                             {
-                                versions = new Dictionary<string, PLPackageVersion>(),
+                                versions = new Dictionary<string, PLCoreOutputPackageVersion>(),
                                 repositoryUrl = $"https://github.com/{product.repository}"
                             };
                             packageNameToPackage[packageVersion.name] = ourPackage;
@@ -221,7 +221,7 @@ internal class PLGatherer
         } };
     }
 
-    private static void SortPackage(PLPackage package)
+    private static void SortPackage(PLCoreOutputPackage package)
     {
         // GitHub releases are usually sorted already in the desired order, but to be extra sure,
         // sort the releases by semver precedence in descending order.
@@ -236,9 +236,9 @@ internal class PLGatherer
         package.versions = NewOrderedDict(reorderedKeys, package);
     }
 
-    private static Dictionary<string, PLPackageVersion> NewOrderedDict(List<string> keys, PLPackage package)
+    private static Dictionary<string, PLCoreOutputPackageVersion> NewOrderedDict(List<string> keys, PLCoreOutputPackage package)
     {
-        var reorderedDict = new Dictionary<string, PLPackageVersion>();
+        var reorderedDict = new Dictionary<string, PLCoreOutputPackageVersion>();
         foreach (var key in keys)
         {
             reorderedDict[key] = package.versions[key];
@@ -325,12 +325,12 @@ internal class PLGatherer
         };
     }
 
-    private PLPackageVersion ToPackage(PLIntermediary intermediary, int downloadCount, string downloadUrl, PLUnitypackageIntermediary unityPackageNullable)
+    private PLCoreOutputPackageVersion ToPackage(PLIntermediary intermediary, int downloadCount, string downloadUrl, PLUnitypackageIntermediary unityPackageNullable)
     {
         var package = JObject.Parse(intermediary.packageJson);
 
         var version = package["version"].Value<string>();
-        return new PLPackageVersion
+        return new PLCoreOutputPackageVersion
         {
             name = package[PackageName].Value<string>(),
             displayName = package["displayName"].Value<string>(),
@@ -355,20 +355,20 @@ internal class PLGatherer
         };
     }
 
-    private static PLAuthor ExtractAuthorUnionField(JToken authorToken)
+    private static PLCoreOutputAuthor ExtractAuthorUnionField(JToken authorToken)
     {
         // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
         return authorToken.Type switch
         {
             JTokenType.Object => ExtractAuthorObject(authorToken.Value<JObject>()),
-            JTokenType.String => new PLAuthor { name = authorToken.Value<string>() },
+            JTokenType.String => new PLCoreOutputAuthor { name = authorToken.Value<string>() },
             _  => throw new DataException("Can't deserialize author from package.json")
         };
     }
 
-    private static PLAuthor ExtractAuthorObject(JObject authorObject)
+    private static PLCoreOutputAuthor ExtractAuthorObject(JObject authorObject)
     {
-        return new PLAuthor
+        return new PLCoreOutputAuthor
         {
             name = authorObject[PackageJsonAuthorName].Value<string>(),
             email = authorObject["email"]?.Value<string>(),

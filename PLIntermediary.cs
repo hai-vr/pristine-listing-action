@@ -1,19 +1,21 @@
-﻿namespace Hai.PristineListing;
+﻿using Hai.PristineListing.Core;
 
-public class PLPackageVersionFetchResult
+namespace Hai.PristineListing.Gatherer;
+
+internal class PLPackageVersionFetchResult
 {
     public bool success;
-    public PLPackageVersion version;
+    public PLCoreOutputPackageVersion version;
 }
 
-public class PLIntermediary
+internal class PLIntermediary
 {
     public bool success;
     public string hashHexNullableIfJson;
     public string packageJson;
 }
 
-public class PLUnitypackageIntermediary
+internal class PLUnitypackageIntermediary
 {
     public string downloadUrl;
 }

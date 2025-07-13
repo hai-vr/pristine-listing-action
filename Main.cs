@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Hai.PristineListing.Gatherer;
 using Hai.PristineListing.Input;
 
 namespace Hai.PristineListing;
