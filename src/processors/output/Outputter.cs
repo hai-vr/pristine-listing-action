@@ -58,68 +58,72 @@ public class PLOutputter
             sw.WriteLine($"## {package.Key}");
             sw.WriteLine("");
 
-            var firstVersion = versions.Values.First();
-            // FIXME: displayName, description, and some other fields like author may contain injections, which will be rendered in HTML.
-            // This needs sanitizing.
-            if (firstVersion.displayName != null) sw.WriteLine($"- displayName: {firstVersion.displayName}");
-            if (firstVersion.description != null) sw.WriteLine($"- description: {firstVersion.description}");
-            if (firstVersion.keywords != null && firstVersion.keywords.Count > 0)
             {
-                sw.WriteLine($"- keywords:");
-                foreach (var keyword in firstVersion.keywords)
+                var firstVersion = versions.Values.First();
+                var firstUpm = firstVersion.upmManifest;
+                // FIXME: displayName, description, and some other fields like author may contain injections, which will be rendered in HTML.
+                // This needs sanitizing.
+                if (firstUpm.displayName != null) sw.WriteLine($"- displayName: {firstUpm.displayName}");
+                if (firstUpm.description != null) sw.WriteLine($"- description: {firstUpm.description}");
+                if (firstUpm.keywords != null && firstUpm.keywords.Count > 0)
                 {
-                    sw.WriteLine($"  - {keyword}");
+                    sw.WriteLine($"- keywords:");
+                    foreach (var keyword in firstUpm.keywords)
+                    {
+                        sw.WriteLine($"  - {keyword}");
+                    }
                 }
-            }
-            if (firstVersion.changelogUrl != null) sw.WriteLine($"- changelogUrl: [{firstVersion.changelogUrl}]({firstVersion.changelogUrl})");
-            if (firstVersion.documentationUrl != null) sw.WriteLine($"- documentationUrl: [{firstVersion.documentationUrl}]({firstVersion.documentationUrl})");
-            if (firstVersion.license != null) sw.WriteLine($"- license: {firstVersion.license}");
-            if (firstVersion.licensesUrl != null) sw.WriteLine($"- licensesUrl: [{firstVersion.licensesUrl}]({firstVersion.licensesUrl})");
-            if (firstVersion.unity != null) sw.WriteLine($"- unity: {firstVersion.unity}");
-            if (firstVersion.unityRelease != null) sw.WriteLine($"- unity: {firstVersion.unityRelease}");
-            if (firstVersion.vrchatVersion != null) sw.WriteLine($"- vrchatVersion: {firstVersion.vrchatVersion}");
-            if (firstVersion.dependencies != null && firstVersion.dependencies.Count > 0)
-            {
-                sw.WriteLine("- dependencies:");
-                foreach (var dep in firstVersion.dependencies)
+                if (firstUpm.changelogUrl != null) sw.WriteLine($"- changelogUrl: [{firstUpm.changelogUrl}]({firstUpm.changelogUrl})");
+                if (firstUpm.documentationUrl != null) sw.WriteLine($"- documentationUrl: [{firstUpm.documentationUrl}]({firstUpm.documentationUrl})");
+                if (firstUpm.license != null) sw.WriteLine($"- license: {firstUpm.license}");
+                if (firstUpm.licensesUrl != null) sw.WriteLine($"- licensesUrl: [{firstUpm.licensesUrl}]({firstUpm.licensesUrl})");
+                if (firstUpm.unity != null) sw.WriteLine($"- unity: {firstUpm.unity}");
+                if (firstUpm.unityRelease != null) sw.WriteLine($"- unity: {firstUpm.unityRelease}");
+                if (firstVersion.vrchatVersion != null) sw.WriteLine($"- vrchatVersion: {firstVersion.vrchatVersion}");
+                if (firstUpm.dependencies != null && firstUpm.dependencies.Count > 0)
                 {
-                    sw.WriteLine($"  - {dep.Key} : {dep.Value}");
+                    sw.WriteLine("- dependencies:");
+                    foreach (var dep in firstUpm.dependencies)
+                    {
+                        sw.WriteLine($"  - {dep.Key} : {dep.Value}");
+                    }
                 }
-            }
-            if (firstVersion.vpmDependencies != null && firstVersion.vpmDependencies.Count > 0)
-            {
-                sw.WriteLine("- vpmDependencies:");
-                foreach (var dep in firstVersion.vpmDependencies)
+                if (firstVersion.vpmDependencies != null && firstVersion.vpmDependencies.Count > 0)
                 {
-                    sw.WriteLine($"  - {dep.Key} : {dep.Value}");
+                    sw.WriteLine("- vpmDependencies:");
+                    foreach (var dep in firstVersion.vpmDependencies)
+                    {
+                        sw.WriteLine($"  - {dep.Key} : {dep.Value}");
+                    }
                 }
-            }
 
-            var author = firstVersion.author;
-            switch (author.Kind)
-            {
-                case PLCoreOutputAuthorKind.String:
-                    sw.WriteLine($"- author: {author.AsString()}");
-                    break;
-                case PLCoreOutputAuthorKind.Object:
-                    var authorObject = author.AsObject();
-                    sw.WriteLine($"- author:");
-                    sw.WriteLine($"  - name: {authorObject.name}");
-                    if (authorObject.email != null) sw.WriteLine($"  - email: {authorObject.email}");
-                    if (authorObject.url != null) sw.WriteLine($"  - url: [{authorObject.url}]({authorObject.url})");
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException();
+                var author = firstUpm.author;
+                switch (author.Kind)
+                {
+                    case PLCoreOutputAuthorKind.String:
+                        sw.WriteLine($"- author: {author.AsString()}");
+                        break;
+                    case PLCoreOutputAuthorKind.Object:
+                        var authorObject = author.AsObject();
+                        sw.WriteLine($"- author:");
+                        sw.WriteLine($"  - name: {authorObject.name}");
+                        if (authorObject.email != null) sw.WriteLine($"  - email: {authorObject.email}");
+                        if (authorObject.url != null) sw.WriteLine($"  - url: [{authorObject.url}]({authorObject.url})");
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
+                sw.WriteLine($"- metadata:");
+                sw.WriteLine($"  - totalDownloadCount: {package.Value.totalDownloadCount}");
+                sw.WriteLine($"  - repositoryUrl: [{package.Value.repositoryUrl}]({package.Value.repositoryUrl})");
             }
-            sw.WriteLine($"- metadata:");
-            sw.WriteLine($"  - totalDownloadCount: {package.Value.totalDownloadCount}");
-            sw.WriteLine($"  - repositoryUrl: [{package.Value.repositoryUrl}]({package.Value.repositoryUrl})");
+            
             sw.WriteLine($"- versions:");
             foreach (var version in versions.Values)
             {
                 var appendUnitypackageDownload = version.unitypackageUrl != null ? $" \\[[.unitypackage]({version.unitypackageUrl})\\]" : "";
                 var appendUnitypackageDownloadCount = version.unitypackageDownloadCount != null ? $" *({version.unitypackageDownloadCount})*" : "";
-                var versionFormatted = version.semver.IsRelease ? $"**{version.version}**" : version.version;
+                var versionFormatted = version.semver.IsRelease ? $"**{version.upmManifest.version}**" : version.upmManifest.version;
                 sw.WriteLine($"  - {versionFormatted} \\[[.zip]({version.url})\\]{appendUnitypackageDownload} -> *{version.downloadCount} downloads*{appendUnitypackageDownloadCount}");
             }
             sw.WriteLine("");

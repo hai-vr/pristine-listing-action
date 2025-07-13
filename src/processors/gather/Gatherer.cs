@@ -42,7 +42,7 @@ public class PLGatherer
             // This is generally not a problem as we're aggregating from repositories that we have ownership of,
             // however if there is ever a case where there's a need to aggregate from multiple repositories
             // owned by different people, then this case might crop up.
-            .ToDictionary(package => package.versions.First().Value.name);
+            .ToDictionary(package => package.versions.First().Value.upmManifest.name);
 
         foreach (var outputListingPackage in outputListing.packages.Values)
         {
@@ -128,22 +128,23 @@ public class PLGatherer
                 if (packageVersionFetchResult.success)
                 {
                     var packageVersion = packageVersionFetchResult.version!;
+                    var upmManifest = packageVersion.upmManifest;
                     if (true
-                        && (product.onlyPackageNames.Count == 0 || product.onlyPackageNames.Contains(packageVersion.name))
-                        && (product.includePrereleases == true || !IsPrerelease(packageVersion.version))
-                        )
+                        && (product.onlyPackageNames.Count == 0 || product.onlyPackageNames.Contains(upmManifest.name))
+                        && (product.includePrereleases == true || !IsPrerelease(upmManifest.version))
+                       )
                     {
-                        if (!packageNameToPackage.TryGetValue(packageVersion.name, out var ourPackage))
+                        if (!packageNameToPackage.TryGetValue(upmManifest.name, out var ourPackage))
                         {
                             ourPackage = new PLCoreOutputPackage
                             {
                                 versions = new Dictionary<string, PLCoreOutputPackageVersion>(),
                                 repositoryUrl = $"https://github.com/{product.repository}"
                             };
-                            packageNameToPackage[packageVersion.name] = ourPackage;
+                            packageNameToPackage[upmManifest.name] = ourPackage;
                         }
 
-                        ourPackage.versions.Add(packageVersion.version, packageVersion);
+                        ourPackage.versions.Add(upmManifest.version, packageVersion);
                     }
                 }
             }
@@ -237,7 +238,7 @@ public class PLGatherer
         // however, we do make the assumption in our Outputter that the most recent package is the first in the versions list.
         var reorderedKeys = package.versions.Values
             .OrderByDescending(packageVersion => packageVersion.semver, SemVersion.PrecedenceComparer)
-            .Select(packageVersion => packageVersion.version)
+            .Select(packageVersion => packageVersion.upmManifest.version)
             .ToList();
 
         // TODO: Dictionary aren't supposed to have a given iteration order, it may be relevant to switch this to a JObject or something.
@@ -341,34 +342,43 @@ public class PLGatherer
         var version = package["version"].Value<string>();
         return new PLCoreOutputPackageVersion
         {
-            name = package[PackageName].Value<string>(),
-            displayName = package["displayName"]?.Value<string>(),
-            version = version,
-            unity = package["unity"]?.Value<string>(),
-            description = package["description"]?.Value<string>(),
-            dependencies = AsDictionary(package["dependencies"]?.Value<JObject>()),
-            vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>()),
-            samples = package["samples"]?.Value<JArray>().Select(token => new PLCoreOutputSample
+            upmManifest = new PLCoreOutputPackageUPMSpecification
             {
-                displayName = token["displayName"].Value<string>(),
-                description = token["description"].Value<string>(),
-                path = token["path"].Value<string>()
-            }).ToList(),
-            author = package["author"] != null ? ExtractAuthorUnionField(package["author"]) : null,
+                // Required
+                name = package[PackageName].Value<string>(),
+                version = version,
+                
+                // Recommended
+                description = package["description"]?.Value<string>(),
+                displayName = package["displayName"]?.Value<string>(),
+                unity = package["unity"]?.Value<string>(),
+                
+                // Optional
+                author = package["author"] != null ? ExtractAuthorUnionField(package["author"]) : null,
+                changelogUrl = package["changelogUrl"]?.Value<string>(),
+                dependencies = AsDictionary(package["dependencies"]?.Value<JObject>()),
+                samples = package["samples"]?.Value<JArray>().Select(token => new PLCoreOutputSample
+                {
+                    displayName = token["displayName"].Value<string>(),
+                    description = token["description"].Value<string>(),
+                    path = token["path"].Value<string>()
+                }).ToList(),
+                documentationUrl = package["documentationUrl"]?.Value<string>(),
+                license = package["license"]?.Value<string>(),
+                hideInEditor = package["hideInEditor"]?.Value<bool>(),
+                keywords = package["keywords"]?.Value<JArray>().Select(token => token.Value<string>()).ToList(),
+                licensesUrl = package["licensesUrl"]?.Value<string>(),
+                unityRelease = package["unityRelease"]?.Value<string>(),
+            },
+            
+            vpmDependencies = AsDictionary(package["vpmDependencies"]?.Value<JObject>()),
             url = downloadUrl,
-            documentationUrl = package["documentationUrl"]?.Value<string>(),
-            changelogUrl = package["changelogUrl"]?.Value<string>(),
-            license = package["license"]?.Value<string>(),
             zipSHA256 = intermediary.hashHexNullableIfJson,
             
             vrchatVersion = package["vrchatVersion"]?.Value<string>(),
             legacyFolders = AsDictionary(package["legacyFolders"]?.Value<JObject>()),
             legacyPackages = package["legacyPackages"]?.Value<JArray>().Select(token => token.Value<string>()).ToList(),
             
-            hideInEditor = package["hideInEditor"]?.Value<bool>(),
-            keywords = package["keywords"]?.Value<JArray>().Select(token => token.Value<string>()).ToList(),
-            licensesUrl = package["licensesUrl"]?.Value<string>(),
-            unityRelease = package["unityRelease"]?.Value<string>(),
             
             downloadCount = downloadCount,
             semver = SemVersion.Parse(version, SemVersionStyles.Any),

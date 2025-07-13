@@ -65,29 +65,30 @@ internal class PLOutputPackageVersion
 
     internal static PLOutputPackageVersion FromCore(PLCoreOutputPackageVersion version)
     {
+        var upmManifest = version.upmManifest;
         return new PLOutputPackageVersion
         {
-            name = version.name,
-            displayName = version.displayName,
-            version = version.version,
-            unity = version.unity,
-            description = version.description,
-            dependencies = version.dependencies,
+            name = upmManifest.name,
+            displayName = upmManifest.displayName,
+            version = upmManifest.version,
+            unity = upmManifest.unity,
+            description = upmManifest.description,
+            dependencies = upmManifest.dependencies,
             vpmDependencies = version.vpmDependencies,
-            samples = version.samples != null ? version.samples.Select(PLOutputSample.FromCore).ToList() : null,
-            changelogUrl = version.changelogUrl,
-            author = version.author.Kind == PLCoreOutputAuthorKind.Object ? PLOutputAuthorObject.FromCore(version.author.AsObject()) : version.author.AsString(),
-            documentationUrl = version.documentationUrl,
-            license = version.license,
+            samples = upmManifest.samples != null ? upmManifest.samples.Select(PLOutputSample.FromCore).ToList() : null,
+            changelogUrl = upmManifest.changelogUrl,
+            author = upmManifest.author.Kind == PLCoreOutputAuthorKind.Object ? PLOutputAuthorObject.FromCore(upmManifest.author.AsObject()) : upmManifest.author.AsString(),
+            documentationUrl = upmManifest.documentationUrl,
+            license = upmManifest.license,
             vrchatVersion = version.vrchatVersion,
             zipSHA256 = version.zipSHA256,
             url = version.url,
             legacyFolders = version.legacyFolders,
             legacyPackages = version.legacyPackages,
-            hideInEditor = version.hideInEditor,
-            keywords = version.keywords,
-            licensesUrl = version.licensesUrl,
-            unityRelease = version.unityRelease,
+            hideInEditor = upmManifest.hideInEditor,
+            keywords = upmManifest.keywords,
+            licensesUrl = upmManifest.licensesUrl,
+            unityRelease = upmManifest.unityRelease,
         };
     }
 }

@@ -70,12 +70,12 @@ internal class Program
             {
                 foreach (var version in outputListingPackage.versions.Values)
                 {
-                    var description = version.description ?? "";
+                    var description = version.upmManifest.description ?? "";
                     if (_devOnly)
                     {
-                        version.displayName = $"{version.displayName} 🔽{version.downloadCount}/{totalDownloadCount}";
+                        version.upmManifest.displayName = $"{(version.upmManifest.displayName ?? "")} 🔽{version.downloadCount}/{totalDownloadCount}";
                     }
-                    version.description = $"{description} (Downloaded {version.downloadCount} times)";
+                    version.upmManifest.description = $"{description} (Downloaded {version.downloadCount} times)";
                 }
             }
         }
