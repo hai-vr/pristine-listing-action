@@ -22,9 +22,11 @@ public class PLGatherer
 
     private readonly HttpClient _http;
 
-    public PLGatherer(string githubToken)
+    public PLGatherer(string githubToken) : this(githubToken, new HttpClient()) { }
+
+    public PLGatherer(string githubToken, HttpClient httpClient)
     {
-        _http = new HttpClient();
+        _http = httpClient;
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
     }

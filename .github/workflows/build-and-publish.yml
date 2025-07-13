@@ -43,13 +43,13 @@ jobs:
         dotnet-version: '9.0.x'
 
     - name: Build project
-      run: dotnet build ${{ env.subfolder }}/pristine-listing-action.csproj
+      run: dotnet build ${{ env.subfolder }}/pristine-listing-action/pristine-listing-action.csproj
 
     - name: Run project
       env:
         IN__GITHUB_TOKEN: ${{ secrets.gh_token }}
         IN__DEVONLY: ${{ inputs.devonly }}
-      run: dotnet run --project ${{ env.subfolder }}/pristine-listing-action.csproj
+      run: dotnet run --project ${{ env.subfolder }}/pristine-listing-action/pristine-listing-action.csproj
 
     ## From https://github.com/actions/upload-pages-artifact (MIT)
     - name: Upload static files as artifact
