@@ -77,7 +77,9 @@ internal class PLOutputPackageVersion
             vpmDependencies = version.vpmConvention.vpmDependencies,
             samples = upmManifest.samples != null ? upmManifest.samples.Select(PLOutputSample.FromCore).ToList() : null,
             changelogUrl = upmManifest.changelogUrl,
-            author = upmManifest.author.Kind == PLCoreOutputAuthorKind.Object ? PLOutputAuthorObject.FromCore(upmManifest.author.AsObject()) : upmManifest.author.AsString(),
+            author = upmManifest.author != null
+                ? upmManifest.author.Kind == PLCoreOutputAuthorKind.Object ? PLOutputAuthorObject.FromCore(upmManifest.author.AsObject()) : upmManifest.author.AsString()
+                : null,
             documentationUrl = upmManifest.documentationUrl,
             license = upmManifest.license,
             vrchatVersion = version.vrcConvention.vrchatVersion,

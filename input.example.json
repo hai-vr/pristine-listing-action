@@ -12,6 +12,7 @@
         "includeDownloadCount" : true
     },
     "products": [
+        { "repository" : "hai-vr/upm-test-package", "mode" : "ExcessiveAlways" },
         { "repository" : "hai-vr/animation-viewer-vcc" },
         { "repository" : "hai-vr/animator-as-code-ndmf-processor", "includePrereleases" : false },
         { "repository" : "hai-vr/animator-as-code-vrchat", "includePrereleases" : false },
