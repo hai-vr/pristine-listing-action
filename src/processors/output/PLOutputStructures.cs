@@ -55,7 +55,7 @@ internal class PLOutputPackageVersion
     public string documentationUrl;
     public string license;
     public string licensesUrl; /* Rarely used, position does not matter. */
-    public string vrchatVersion;
+    [Obsolete] public string vrchatVersion;
     public string zipSHA256;
     public bool? hideInEditor; /* Rarely used, position does not matter. */
     public string unityRelease; /* Rarely used, position does not matter. */

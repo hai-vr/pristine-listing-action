@@ -67,7 +67,7 @@ public class PLCoreOutputPackageVPMConvention
 
 public class PLCoreOutputPackageVRCConvention
 {
-    public string vrchatVersion;
+    [Obsolete] public string vrchatVersion;
     /*opt*/ public Dictionary<string, string> legacyFolders;
     /*opt*/ public List<string> legacyPackages;
 }
