@@ -4,6 +4,7 @@ using Shouldly;
 
 namespace Hai.PristineListing.Tests;
 
+[TestFixture]
 public class InputParserTest
 {
     private InputParser _sut;
@@ -41,6 +42,7 @@ public class InputParserTest
         };
     }
 
+#region Basics
     [Test]
     public void It_should_parse_minimal_input_json()
     {
@@ -103,7 +105,8 @@ public class InputParserTest
         );
         result.ShouldBeEquivalentTo(_minimalExpectedResult);
     }
-
+#endregion
+#region Prereleases
     [Test]
     public void It_should_propagate_prerelease_false_setting_to_products_that_do_not_define_it()
     {
@@ -221,10 +224,361 @@ public class InputParserTest
         _minimalExpectedResult.products[0].includePrereleases = false;
         result.ShouldBeEquivalentTo(_minimalExpectedResult);
     }
+#endregion
+#region Mode
+    [Test]
+    public void It_should_propagate_mode_PackageJsonAssetOnly_setting_to_products_that_do_not_define_it()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "defaultMode": "PackageJsonAssetOnly"
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package"
+                    }
+                ]
+            }
+            """);
+            
+        // Then
+        _minimalExpectedResult.products[0].mode = PLCoreInputMode.PackageJsonAssetOnly;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
     
-    // TODO:
-    // Test for defaultMode / mode
-    // Test for excessiveModeToleratesPackageJsonAssetMissing
-    // Test for includeDownloadCount
-    // Test for onlyPackageNames
+    [Test]
+    public void It_should_propagate_mode_ExcessiveWhenNeeded_setting_to_products_that_do_not_define_it()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "defaultMode": "ExcessiveWhenNeeded"
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package"
+                    }
+                ]
+            }
+            """);
+            
+        // Then
+        _minimalExpectedResult.products[0].mode = PLCoreInputMode.ExcessiveWhenNeeded;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+    
+    [Test]
+    public void It_should_propagate_mode_ExcessiveAlways_setting_to_products_that_do_not_define_it()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "defaultMode": "ExcessiveAlways"
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package"
+                    }
+                ]
+            }
+            """);
+            
+        // Then
+        _minimalExpectedResult.products[0].mode = PLCoreInputMode.ExcessiveAlways;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+    
+    [Test]
+    public void It_should_NOT_propagate_mode_PackageJsonAssetOnly_setting_to_products_that_DO_define_it()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "defaultMode": "PackageJsonAssetOnly"
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package",
+                        "mode": "ExcessiveWhenNeeded"
+                    }
+                ]
+            }
+            """);
+            
+        // Then
+        _minimalExpectedResult.products[0].mode = PLCoreInputMode.ExcessiveWhenNeeded;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+    
+    [Test]
+    public void It_should_NOT_propagate_mode_ExcessiveWhenNeeded_setting_to_products_that_DO_define_it()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "defaultMode": "ExcessiveWhenNeeded"
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package",
+                        "mode": "ExcessiveAlways"
+                    }
+                ]
+            }
+            """);
+            
+        // Then
+        _minimalExpectedResult.products[0].mode = PLCoreInputMode.ExcessiveAlways;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+    
+    [Test]
+    public void It_should_NOT_propagate_mode_ExcessiveAlways_setting_to_products_that_DO_define_it()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "defaultMode": "ExcessiveAlways"
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package",
+                        "mode": "ExcessiveWhenNeeded"
+                    }
+                ]
+            }
+            """);
+            
+        // Then
+        _minimalExpectedResult.products[0].mode = PLCoreInputMode.ExcessiveWhenNeeded;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+#endregion
+#region Settings
+    [Test]
+    public void It_should_set_excessiveModeToleratesPackageJsonAssetMissing_to_false()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "excessiveModeToleratesPackageJsonAssetMissing": false
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package"
+                    }
+                ]
+            }
+            """);
+                
+        // Then
+        _minimalExpectedResult.settings.excessiveModeToleratesPackageJsonAssetMissing = false;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+    
+    [Test]
+    public void It_should_set_excessiveModeToleratesPackageJsonAssetMissing_to_true()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "excessiveModeToleratesPackageJsonAssetMissing": true
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package"
+                    }
+                ]
+            }
+            """);
+            
+        // Then
+        _minimalExpectedResult.settings.excessiveModeToleratesPackageJsonAssetMissing = true;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+    
+    [Test]
+    public void It_should_set_includeDownloadCount_to_false()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "includeDownloadCount": false
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package"
+                    }
+                ]
+            }
+            """);
+                
+        // Then
+        _minimalExpectedResult.settings.includeDownloadCount = false;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+    
+    [Test]
+    public void It_should_set_includeDownloadCount_to_true()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "includeDownloadCount": true
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package"
+                    }
+                ]
+            }
+            """);
+            
+        // Then
+        _minimalExpectedResult.settings.includeDownloadCount = true;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+#endregion
+#region Package names
+    [Test]
+    public void It_should_set_onlyPackageNames()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "includeDownloadCount": false
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package",
+                        "onlyPackageNames": [ "upm-test-package", "secondary-test-package" ]
+                    }
+                ]
+            }
+            """);
+                    
+        // Then
+        _minimalExpectedResult.products[0].onlyPackageNames = ["upm-test-package", "secondary-test-package"];
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+    
+    [Test]
+    public void It_should_set_onlyPackageNames_to_empty_list()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "includeDownloadCount": false
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package",
+                        "onlyPackageNames": []
+                    }
+                ]
+            }
+            """);
+                    
+        // Then
+        _minimalExpectedResult.products[0].onlyPackageNames = [];
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+#endregion
 }
