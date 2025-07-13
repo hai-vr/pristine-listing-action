@@ -100,18 +100,6 @@ public class PLOutputter
                 var author = firstUpm.author;
                 if (author != null)
                 {
-                    case PLCoreOutputAuthorKind.String:
-                        sw.WriteLine($"- author: {author.AsString()}");
-                        break;
-                    case PLCoreOutputAuthorKind.Object:
-                        var authorObject = author.AsObject();
-                        sw.WriteLine($"- author:");
-                        sw.WriteLine($"  - name: {authorObject.name}");
-                        if (authorObject.email != null) sw.WriteLine($"  - email: {authorObject.email}");
-                        if (authorObject.url != null) sw.WriteLine($"  - url: [{authorObject.url}]({authorObject.url})");
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
                     switch (author.Kind)
                     {
                         case PLCoreOutputAuthorKind.String:
