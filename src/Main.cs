@@ -24,9 +24,7 @@ internal class Program
             if (string.IsNullOrWhiteSpace(githubToken)) throw new ArgumentException("IN__GITHUB_TOKEN env var contains nothing");
 
             var devOnly = false;
-
             if (bool.TryParse(EnvVar("IN__DEVONLY"), out var doDevOnly)) devOnly = doDevOnly;
-            
             if (devOnly) Console.WriteLine("We're in DEVELOPERONLY mode.");
 
             var inputFile = "input.json";
@@ -61,13 +59,11 @@ internal class Program
 
         var outputListing = await _gatherer.DownloadAndAggregate(input);
 
-        var includeDownloadCount = input.settings.includeDownloadCount;
-        foreach (var outputListingPackage in outputListing.packages.Values)
+        if (input.settings.includeDownloadCount)
         {
-            var totalDownloadCount = outputListingPackage.totalDownloadCount;
-
-            if (includeDownloadCount)
+            foreach (var outputListingPackage in outputListing.packages.Values)
             {
+                var totalDownloadCount = outputListingPackage.totalDownloadCount;
                 foreach (var version in outputListingPackage.versions.Values)
                 {
                     var description = version.upmManifest.description ?? "";
