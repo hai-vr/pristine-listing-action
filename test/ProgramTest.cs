@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Hai.PristineListing.Aggregator;
 using Hai.PristineListing.Core;
 using Hai.PristineListing.Gatherer;
 using Hai.PristineListing.Input;
@@ -19,12 +20,14 @@ public class ProgramTest
         
         var parser = new Mock<InputParser>();
         var gatherer = new Mock<PLGatherer>(null);
+        var aggregator = new Mock<PLAggregator>();
         var modifier = new Mock<PLModifier>(null);
         var outputter = new Mock<PLOutputter>(null);
         var sut = new Program(
             "test_input_file.json",
             parser.Object,
             gatherer.Object,
+            aggregator.Object,
             modifier.Object,
             outputter.Object
         );
@@ -39,6 +42,10 @@ public class ProgramTest
         gatherer
             .Setup(it => it.DownloadAndAggregate(returnedFromParser))
             .ReturnsAsync(returnedFromGatherer);
+        var returnedFromAggregator = new PLCoreAggregation();
+        aggregator
+            .Setup(it => it.DownloadAndAggregate(returnedFromParser))
+            .ReturnsAsync(returnedFromAggregator);
         modifier
             .Setup(it => it.Modify(returnedFromParser, returnedFromGatherer));
         outputter
@@ -50,6 +57,7 @@ public class ProgramTest
         // Then
         parser.Verify(it => it.Parse(fileContents), Times.Once);
         gatherer.Verify(it => it.DownloadAndAggregate(returnedFromParser), Times.Once);
+        aggregator.Verify(it => it.DownloadAndAggregate(returnedFromParser), Times.Once);
         modifier.Verify(it => it.Modify(returnedFromParser, returnedFromGatherer), Times.Once);
         outputter.Verify(it => it.Write(returnedFromParser.settings, returnedFromGatherer), Times.Once);
     }

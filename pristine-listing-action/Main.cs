@@ -1,4 +1,5 @@
 ﻿using System.Text;
+using Hai.PristineListing.Aggregator;
 using Hai.PristineListing.Gatherer;
 using Hai.PristineListing.Input;
 using Hai.PristineListing.Modifier;
@@ -14,6 +15,7 @@ public class Program
     private readonly PLGatherer _gatherer;
     private readonly PLModifier _modifier;
     private readonly PLOutputter _outputter;
+    private readonly PLAggregator _aggregator;
 
     public static async Task Main(string[] args)
     {
@@ -47,15 +49,17 @@ public class Program
 
         _inputParser = new InputParser();
         _gatherer = new PLGatherer(githubToken);
+        _aggregator = new PLAggregator();
         _modifier = new PLModifier(devOnly);
         _outputter = new PLOutputter(outputFile);
     }
 
-    public Program(string inputFile, InputParser inputParser, PLGatherer gatherer, PLModifier modifier, PLOutputter outputter)
+    public Program(string inputFile, InputParser inputParser, PLGatherer gatherer, PLAggregator aggregator, PLModifier modifier, PLOutputter outputter)
     {
         _inputFile = inputFile;
         _inputParser = inputParser;
         _gatherer = gatherer;
+        _aggregator = aggregator;
         _modifier = modifier;
         _outputter = outputter;
     }
@@ -67,7 +71,12 @@ public class Program
         var inputJson = await File.ReadAllTextAsync(_inputFile, Encoding.UTF8);
         var input = _inputParser.Parse(inputJson);
 
-        var outputListing = await _gatherer.DownloadAndAggregate(input);
+        var gathererTask = _gatherer.DownloadAndAggregate(input);
+        var aggregatorTask = _aggregator.DownloadAndAggregate(input);
+        await Task.WhenAll(gathererTask, aggregatorTask);
+        
+        var outputListing = await gathererTask;
+        var outputAggregation = await aggregatorTask;
 
         _modifier.Modify(input, outputListing);
 
