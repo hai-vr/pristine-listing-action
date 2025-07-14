@@ -5,6 +5,7 @@ public class PLCoreInput
     public PLCoreInputListingData listingData;
     public PLCoreInputSettings settings;
     public List<PLCoreInputProduct> products;
+    public List<PLCoreAggregateListing> aggregateListings;
 }
 
 public class PLCoreInputSettings
@@ -35,4 +36,9 @@ public enum PLCoreInputMode
     PackageJsonAssetOnly = 1,
     ExcessiveWhenNeeded = 2,
     ExcessiveAlways = 3
+}
+
+public class PLCoreAggregateListing
+{
+    public string listing;
 }

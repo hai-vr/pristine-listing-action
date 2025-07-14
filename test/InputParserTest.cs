@@ -39,7 +39,8 @@ public class InputParserTest
                     mode = PLCoreInputMode.PackageJsonAssetOnly,
                     onlyPackageNames = []
                 }
-            ]
+            ],
+            aggregateListings = []
         };
     }
 
@@ -641,4 +642,41 @@ public class InputParserTest
         result.ShouldBeEquivalentTo(_minimalExpectedResult);
     }
 #endregion
+#region Aggregate listings
+    [Test]
+    public void It_should_parse_minimal_aggregateListings()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {},
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package"
+                    }
+                ],
+                "aggregateListings": [
+                    {
+                        "listing": "https://example.com/other-listing.json"
+                    }
+                ]
+            }
+            """);
+        
+        // Then
+        _minimalExpectedResult.aggregateListings.Add(new PLCoreAggregateListing
+        {
+            listing = "https://example.com/other-listing.json"
+        });
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+#endregion
+
 }

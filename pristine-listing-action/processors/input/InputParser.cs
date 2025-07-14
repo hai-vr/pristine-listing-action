@@ -37,7 +37,12 @@ public class InputParser
                     onlyPackageNames = product.onlyPackageNames ?? new List<string>(),
                     mode = product.mode is null or PLInputMode.Undefined ? (PLCoreInputMode)(int)input.settings.defaultMode : (PLCoreInputMode)(int)product.mode
                 })
-                .ToList()
+                .ToList(),
+            aggregateListings = input.aggregateListings?
+                .Select(aggregateListing => new PLCoreAggregateListing
+                {
+                    listing = aggregateListing.listing
+                }).ToList() ?? new List<PLCoreAggregateListing>()
         };
     }
 }
@@ -47,6 +52,7 @@ internal class PLInput
     public PLInputListingData listingData;
     public PLInputSettings settings;
     public List<PLInputProduct> products;
+    public List<PLAggregateListing>? aggregateListings;
 }
 
 internal class PLInputSettings
@@ -88,4 +94,9 @@ internal enum PLInputMode
     PackageJsonAssetOnly = 1,
     ExcessiveWhenNeeded = 2,
     ExcessiveAlways = 3
+}
+
+internal class PLAggregateListing
+{
+    public string listing;
 }
