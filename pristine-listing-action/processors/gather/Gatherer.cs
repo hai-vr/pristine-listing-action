@@ -24,6 +24,10 @@ public class PLGatherer
 
     public PLGatherer(string githubToken) : this(githubToken, new HttpClient()) { }
 
+    /// CAUTION: This method is exposed for unit tests in order to mock HttpClient.
+    /// This HttpClient will be modified to append a Bearer header to all requests,
+    /// which will contain the GitHub token. For this reason, this httpClient instance MUST NOT be shared with other consumers,
+    /// such as the Aggregator.
     public PLGatherer(string githubToken, HttpClient httpClient)
     {
         _http = httpClient;
