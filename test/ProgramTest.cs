@@ -31,7 +31,7 @@ public class ProgramTest
             modifier.Object,
             outputter.Object
         );
-        var returnedFromParser = new PLCoreInput()
+        var returnedFromParser = new PLCoreInput
         {
             settings = new PLCoreInputSettings()
         };
@@ -46,10 +46,6 @@ public class ProgramTest
         aggregator
             .Setup(it => it.DownloadAndAggregate(returnedFromParser))
             .ReturnsAsync(returnedFromAggregator);
-        modifier
-            .Setup(it => it.Modify(returnedFromParser, returnedFromGatherer));
-        outputter
-            .Setup(it => it.Write(returnedFromParser.settings, returnedFromGatherer));
         
         // When
         await sut.Run();
@@ -59,6 +55,6 @@ public class ProgramTest
         gatherer.Verify(it => it.DownloadAndAggregate(returnedFromParser), Times.Once);
         aggregator.Verify(it => it.DownloadAndAggregate(returnedFromParser), Times.Once);
         modifier.Verify(it => it.Modify(returnedFromParser, returnedFromGatherer), Times.Once);
-        outputter.Verify(it => it.Write(returnedFromParser.settings, returnedFromGatherer), Times.Once);
+        outputter.Verify(it => it.Write(returnedFromParser.settings, returnedFromGatherer, returnedFromAggregator), Times.Once);
     }
 }

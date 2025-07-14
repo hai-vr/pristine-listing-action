@@ -80,6 +80,6 @@ public class Program
 
         _modifier.Modify(input, outputListing);
 
-        await _outputter.Write(input.settings, outputListing);
+        await _outputter.Write(input.settings, outputListing, outputAggregation);
     }
 }
