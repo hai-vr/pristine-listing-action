@@ -31,6 +31,7 @@ Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listi
     - If the zip is not downloaded, it will not calculate any `zipSHA256` value (see [Differences](#differences) section below).
 - `excessiveModeToleratesPackageJsonAssetMissing` bool: If true, when running excessive mode, download the zip even if there is no `package.json` asset in the release.
 - `includeDownloadCount` bool: Append the number of downloads to the description of that version.
+- `forceOutputAuthorAsObject` bool: If true, the index will force the `author` field to be an object, even if the `package.json` defines it as a string. This will only affect the JSON output, not the webpage.
 
 ### Include or Exclude packages
 

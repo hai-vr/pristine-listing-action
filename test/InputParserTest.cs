@@ -27,7 +27,8 @@ public class InputParserTest
             settings = new PLCoreInputSettings
             {
                 excessiveModeToleratesPackageJsonAssetMissing = true,
-                includeDownloadCount = false
+                includeDownloadCount = false,
+                forceOutputAuthorAsObject = false
             },
             products =
             [
@@ -517,6 +518,65 @@ public class InputParserTest
             
         // Then
         _minimalExpectedResult.settings.includeDownloadCount = true;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+    
+    
+    [Test]
+    public void It_should_set_forceOutputAuthorAsObject_to_false()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "forceOutputAuthorAsObject": false
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package"
+                    }
+                ]
+            }
+            """);
+                
+        // Then
+        _minimalExpectedResult.settings.forceOutputAuthorAsObject = false;
+        result.ShouldBeEquivalentTo(_minimalExpectedResult);
+    }
+    
+    [Test]
+    public void It_should_set_forceOutputAuthorAsObject_to_true()
+    {
+        // When
+        PLCoreInput result = _sut.Parse(
+            """
+            {
+                "listingData": {
+                    "name": "Name",
+                    "author": "Author",
+                    "url": "https://example.com/index.json",
+                    "id": "com.example.listing"
+                },
+                "settings": {
+                    "forceOutputAuthorAsObject": true
+                },
+                "products": [
+                    {
+                        "repository": "hai-vr/upm-test-package"
+                    }
+                ]
+            }
+            """);
+            
+        // Then
+        _minimalExpectedResult.settings.forceOutputAuthorAsObject = true;
         result.ShouldBeEquivalentTo(_minimalExpectedResult);
     }
 #endregion

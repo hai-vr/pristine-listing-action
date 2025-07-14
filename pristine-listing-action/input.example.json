@@ -9,7 +9,8 @@
         "defaultIncludePrereleases" : true,
         "defaultMode" : "PackageJsonAssetOnly",
         "excessiveModeToleratesPackageJsonAssetMissing" : true,
-        "includeDownloadCount" : false
+        "includeDownloadCount" : false,
+        "forceOutputAuthorAsObject" : false
     },
     "products": [
         { "repository" : "hai-vr/upm-test-package", "mode" : "ExcessiveAlways" },

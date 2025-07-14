@@ -15,14 +15,30 @@ public class PLOutputter
         _outputIndexJson = outputIndexJson;
     }
 
-    public async Task Write(PLCoreOutputListing outputListing)
+    public async Task Write(PLCoreInputSettings settings, PLCoreOutputListing outputListing)
     {
-        await Task.WhenAll(new[] { CreateListing(outputListing), CreateWebpage(outputListing) });
+        await Task.WhenAll(new[] { CreateListing(settings, outputListing), CreateWebpage(outputListing) });
     }
 
-    private async Task CreateListing(PLCoreOutputListing outputListing)
+    private async Task CreateListing(PLCoreInputSettings settings, PLCoreOutputListing outputListing)
     {
         var asOutput = PLOutputListing.FromCore(outputListing);
+        if (settings.forceOutputAuthorAsObject)
+        {
+            foreach (var package in asOutput.packages.Values)
+            {
+                foreach (var version in package.versions.Values)
+                {
+                    if (version.author is string authorStr)
+                    {
+                        version.author = new PLOutputAuthorObject
+                        {
+                            name = authorStr
+                        };
+                    }
+                }
+            }
+        }
         var outputJson = JsonConvert.SerializeObject(asOutput, Formatting.Indented, new JsonSerializerSettings
         {
             NullValueHandling = NullValueHandling.Ignore

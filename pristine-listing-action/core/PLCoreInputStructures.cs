@@ -11,6 +11,7 @@ public class PLCoreInputSettings
 {
     public bool excessiveModeToleratesPackageJsonAssetMissing;
     public bool includeDownloadCount;
+    public bool forceOutputAuthorAsObject;
 }
 
 public class PLCoreInputListingData
