@@ -11,7 +11,7 @@ public class PLModifier
         _devOnly = devOnly;
     }
 
-    public void Modify(PLCoreInput input, PLCoreOutputListing outputListing)
+    public virtual void Modify(PLCoreInput input, PLCoreOutputListing outputListing)
     {
         if (input.settings.includeDownloadCount)
         {

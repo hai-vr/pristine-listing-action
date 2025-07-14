@@ -6,7 +6,7 @@ namespace Hai.PristineListing.Input;
 
 public class InputParser
 {
-    public PLCoreInput Parse(string inputJson)
+    public virtual PLCoreInput Parse(string inputJson)
     {
         var input = JsonConvert.DeserializeObject<PLInput>(inputJson, new JsonSerializerSettings
         {

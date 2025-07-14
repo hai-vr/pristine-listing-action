@@ -15,7 +15,7 @@ public class PLOutputter
         _outputIndexJson = outputIndexJson;
     }
 
-    public async Task Write(PLCoreInputSettings settings, PLCoreOutputListing outputListing)
+    public virtual async Task Write(PLCoreInputSettings settings, PLCoreOutputListing outputListing)
     {
         await Task.WhenAll(new[] { CreateListing(settings, outputListing), CreateWebpage(outputListing) });
     }

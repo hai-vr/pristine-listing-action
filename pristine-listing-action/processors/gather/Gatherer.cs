@@ -31,7 +31,7 @@ public class PLGatherer
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
     }
 
-    public async Task<PLCoreOutputListing> DownloadAndAggregate(PLCoreInput input)
+    public virtual async Task<PLCoreOutputListing> DownloadAndAggregate(PLCoreInput input)
     {
         var outputListing = NewOutputListing(input.listingData);
 
