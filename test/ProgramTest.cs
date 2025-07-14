@@ -12,13 +12,6 @@ namespace Hai.PristineListing.Tests;
 public class ProgramTest
 {
     [Test]
-    public async Task This_test_should_fail()
-    {
-        Assert.Fail();
-        await Task.CompletedTask;
-    }
-
-    [Test]
     public async Task It_should_read_file_contents_and_execute()
     {
         // Given
