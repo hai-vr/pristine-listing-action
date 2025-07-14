@@ -37,6 +37,8 @@ public class PLCoreOutputPackageVersion
 
 public class PLCoreOutputPackageALCOMConvention
 {
+    public string? yanked;
+    
     public JObject vrcGetData;
 }
 

@@ -164,6 +164,7 @@ public class PLOutputter
                 if (firstVersion.alcomConvention.vrcGetData != null)
                 {
                     sw.WriteLine($"- vrc-get:");
+                    if (firstVersion.alcomConvention.yanked is { } yanked) sw.WriteLine($"  - yanked: {yanked}");
                     sw.WriteLine("```json");
                     sw.WriteLine(firstVersion.alcomConvention.vrcGetData.ToString(Formatting.Indented));
                     sw.WriteLine("```");

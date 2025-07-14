@@ -346,6 +346,7 @@ public class PLGatherer
         var package = JObject.Parse(intermediary.packageJson);
 
         var version = package["version"].Value<string>();
+        var vrcGetNullable = package["vrc-get"]?.Value<JObject>();
         return new PLCoreOutputPackageVersion
         {
             upmManifest = new PLCoreOutputPackageUPMSpecification
@@ -394,7 +395,8 @@ public class PLGatherer
             },
             alcomConvention = new PLCoreOutputPackageALCOMConvention
             {
-                vrcGetData = package["vrc-get"]?.Value<JObject>()
+                yanked = vrcGetNullable?["yanked"]?.Value<string>(),
+                vrcGetData = vrcGetNullable
             },
             
             downloadCount = downloadCount,
