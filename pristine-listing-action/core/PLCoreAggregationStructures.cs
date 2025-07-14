@@ -16,7 +16,7 @@ public class PLCoreAggregationListing
     public string id;
     public Dictionary<string, PLCoreAggregationPackage> packages;
 
-    internal string listingUrl;
+    public string listingUrl;
 }
 
 public class PLCoreAggregationPackage
