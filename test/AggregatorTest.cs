@@ -70,7 +70,7 @@ public class AggregatorTest
             aggregateListings = [
                 new PLCoreAggregateListing
                 {
-                    listing = "https://example.com/other-listing.json"
+                    listingUrl = "https://example.com/other-listing.json"
                 }            
             ]
         });

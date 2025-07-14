@@ -664,7 +664,7 @@ public class InputParserTest
                 ],
                 "aggregateListings": [
                     {
-                        "listing": "https://example.com/other-listing.json"
+                        "listingUrl": "https://example.com/other-listing.json"
                     }
                 ]
             }
@@ -673,7 +673,7 @@ public class InputParserTest
         // Then
         _minimalExpectedResult.aggregateListings.Add(new PLCoreAggregateListing
         {
-            listing = "https://example.com/other-listing.json"
+            listingUrl = "https://example.com/other-listing.json"
         });
         result.ShouldBeEquivalentTo(_minimalExpectedResult);
     }

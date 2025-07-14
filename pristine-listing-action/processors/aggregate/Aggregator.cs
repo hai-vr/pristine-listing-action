@@ -28,8 +28,8 @@ public class PLAggregator
 
     private async Task<PLCoreAggregationListing> Resolve(PLCoreAggregateListing aggregateListing)
     {
-        Console.WriteLine($"Getting listing at {aggregateListing.listing}...");
-        var json = await _http.GetStringAsync(aggregateListing.listing);
+        Console.WriteLine($"Getting listing at {aggregateListing.listingUrl}...");
+        var json = await _http.GetStringAsync(aggregateListing.listingUrl);
         var response = JObject.Parse(json);
 
         var corePackages = new Dictionary<string, PLCoreAggregationPackage>();
@@ -65,7 +65,7 @@ public class PLAggregator
             
             packages = corePackages,
             
-            listingUrl = aggregateListing.listing
+            listingUrl = aggregateListing.listingUrl
         };
     }
 }

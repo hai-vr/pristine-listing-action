@@ -41,7 +41,7 @@ public class InputParser
             aggregateListings = input.aggregateListings?
                 .Select(aggregateListing => new PLCoreAggregateListing
                 {
-                    listing = aggregateListing.listing
+                    listingUrl = aggregateListing.listingUrl
                 }).ToList() ?? new List<PLCoreAggregateListing>()
         };
     }
@@ -98,5 +98,5 @@ internal enum PLInputMode
 
 internal class PLAggregateListing
 {
-    public string listing;
+    public string listingUrl;
 }

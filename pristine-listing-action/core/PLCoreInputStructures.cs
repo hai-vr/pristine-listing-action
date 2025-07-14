@@ -40,5 +40,5 @@ public enum PLCoreInputMode
 
 public class PLCoreAggregateListing
 {
-    public string listing;
+    public string listingUrl;
 }
