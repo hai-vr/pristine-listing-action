@@ -3,6 +3,7 @@ using System.Text;
 using Hai.PristineListing.Core;
 using Markdig;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace Hai.PristineListing.Outputter;
 
@@ -17,10 +18,10 @@ public class PLOutputter
 
     public virtual async Task Write(PLCoreInputSettings settings, PLCoreOutputListing outputListing, PLCoreAggregation aggregation)
     {
-        await Task.WhenAll(new[] { CreateListing(settings, outputListing), CreateWebpage(outputListing) });
+        await Task.WhenAll(new[] { CreateListing(settings, outputListing, aggregation), CreateWebpage(outputListing) });
     }
 
-    private async Task CreateListing(PLCoreInputSettings settings, PLCoreOutputListing outputListing)
+    private async Task CreateListing(PLCoreInputSettings settings, PLCoreOutputListing outputListing, PLCoreAggregation aggregation)
     {
         var asOutput = PLOutputListing.FromCore(outputListing);
         if (settings.forceOutputAuthorAsObject)
@@ -39,7 +40,32 @@ public class PLOutputter
                 }
             }
         }
-        var outputJson = JsonConvert.SerializeObject(asOutput, Formatting.Indented, new JsonSerializerSettings
+
+        var intermediate = JObject.FromObject(asOutput, new JsonSerializer
+        {
+            NullValueHandling = NullValueHandling.Ignore
+        });
+        var packages = intermediate["packages"].Value<JObject>();
+        foreach (var aggregate in aggregation.aggregated)
+        {
+            foreach (var aggregatePackage in aggregate.packages)
+            {
+                if (!packages.ContainsKey(aggregatePackage.Key))
+                {
+                    var versions = new JObject();
+                    foreach (var aggregateVersion in aggregatePackage.Value.versions)
+                    {
+                        versions.Add(aggregateVersion.Key, aggregateVersion.Value.data);
+                    }
+
+                    var package = new JObject();
+                    package.Add("versions", versions);
+                    packages.Add(aggregatePackage.Key, package);
+                }
+            }
+        }
+
+        var outputJson = JsonConvert.SerializeObject(intermediate, Formatting.Indented, new JsonSerializerSettings
         {
             NullValueHandling = NullValueHandling.Ignore
         });
