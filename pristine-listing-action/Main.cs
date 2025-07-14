@@ -6,7 +6,7 @@ using Hai.PristineListing.Outputter;
 
 namespace Hai.PristineListing;
 
-internal class Program
+public class Program
 {
     private readonly string _inputFile;
 
@@ -51,7 +51,16 @@ internal class Program
         _outputter = new PLOutputter(outputFile);
     }
 
-    private async Task Run()
+    public Program(string inputFile, InputParser inputParser, PLGatherer gatherer, PLModifier modifier, PLOutputter outputter)
+    {
+        _inputFile = inputFile;
+        _inputParser = inputParser;
+        _gatherer = gatherer;
+        _modifier = modifier;
+        _outputter = outputter;
+    }
+
+    public async Task Run()
     {
         Directory.CreateDirectory("output");
         
