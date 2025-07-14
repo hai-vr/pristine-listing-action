@@ -135,6 +135,13 @@ public class PLOutputter
                 sw.WriteLine($"- metadata:");
                 sw.WriteLine($"  - totalDownloadCount: {package.Value.totalDownloadCount}");
                 sw.WriteLine($"  - repositoryUrl: [{package.Value.repositoryUrl}]({package.Value.repositoryUrl})");
+                if (firstVersion.alcomConvention.vrcGetData != null)
+                {
+                    sw.WriteLine($"- vrc-get:");
+                    sw.WriteLine("```json");
+                    sw.WriteLine(firstVersion.alcomConvention.vrcGetData.ToString(Formatting.Indented));
+                    sw.WriteLine("```");
+                }
             }
             
             sw.WriteLine($"- versions:");

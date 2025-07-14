@@ -1,4 +1,5 @@
-﻿using Semver;
+﻿using Newtonsoft.Json.Linq;
+using Semver;
 
 namespace Hai.PristineListing.Core;
 
@@ -25,12 +26,18 @@ public class PLCoreOutputPackageVersion
     public PLCoreOutputPackageVPMConvention vpmConvention;
     public PLCoreOutputPackageVRCConvention vrcConvention;
     public PLCoreOutputPackageListingConvention listingConvention;
+    public PLCoreOutputPackageALCOMConvention alcomConvention;
     
     // Metadata
     internal int downloadCount;
     internal SemVersion semver;
     internal string? unitypackageUrl;
     internal int? unitypackageDownloadCount;
+}
+
+public class PLCoreOutputPackageALCOMConvention
+{
+    public JObject vrcGetData;
 }
 
 public class PLCoreOutputPackageUPMSpecification

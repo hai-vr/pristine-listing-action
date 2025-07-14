@@ -388,6 +388,10 @@ public class PLGatherer
                 url = downloadUrl,
                 zipSHA256 = intermediary.hashHexNullableIfJson,
             },
+            alcomConvention = new PLCoreOutputPackageALCOMConvention
+            {
+                vrcGetData = package["vrc-get"]?.Value<JObject>()
+            },
             
             downloadCount = downloadCount,
             semver = SemVersion.Parse(version, SemVersionStyles.Any),
