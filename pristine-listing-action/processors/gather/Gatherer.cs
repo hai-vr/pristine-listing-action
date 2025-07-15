@@ -395,7 +395,7 @@ public class PLGatherer
             },
             alcomConvention = new PLCoreOutputPackageALCOMConvention
             {
-                yanked = vrcGetNullable?["yanked"]?.Value<string>(),
+                yanked = vrcGetNullable?["yanked"] != null ? ExtractALCOMYankedField(vrcGetNullable?["yanked"]) : null,
                 vrcGetData = vrcGetNullable
             },
             
@@ -424,6 +424,17 @@ public class PLGatherer
             email: authorObject["email"]?.Value<string>(),
             url: authorObject["url"]?.Value<string>()
         );
+    }
+
+    private PLCoreOutputALCOMYanked ExtractALCOMYankedField(JToken yankedToken)
+    {
+        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
+        return yankedToken.Type switch
+        {
+            JTokenType.Boolean => PLCoreOutputALCOMYanked.FromBool(yankedToken.Value<bool>()),
+            JTokenType.String => PLCoreOutputALCOMYanked.FromString(yankedToken.Value<string>()),
+            _  => throw new DataException("Can't deserialize yanked from package.json")
+        };
     }
 
     private Dictionary<string, string> AsDictionary(JObject objNullable)

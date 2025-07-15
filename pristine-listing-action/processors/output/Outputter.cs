@@ -164,7 +164,20 @@ public class PLOutputter
                 if (firstVersion.alcomConvention.vrcGetData != null)
                 {
                     sw.WriteLine($"- vrc-get:");
-                    if (firstVersion.alcomConvention.yanked is { } yanked) sw.WriteLine($"  - yanked: {yanked}");
+                    if (firstVersion.alcomConvention.yanked is { } yanked)
+                    {
+                        switch (yanked.Kind)
+                        {
+                            case PLCoreOutputALCOMYankedKind.String:
+                                sw.WriteLine($"  - yanked: {yanked.AsString()}");
+                                break;
+                            case PLCoreOutputALCOMYankedKind.Bool:
+                                sw.WriteLine($"  - yanked: {(yanked.AsBool() ? "true" : "false")}");
+                                break;
+                            default:
+                                throw new ArgumentOutOfRangeException();
+                        }
+                    }
                     sw.WriteLine("```json");
                     sw.WriteLine(firstVersion.alcomConvention.vrcGetData.ToString(Formatting.Indented));
                     sw.WriteLine("```");
