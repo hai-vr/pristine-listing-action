@@ -5,6 +5,8 @@ using System.Security.Cryptography;
 using System.Text;
 using Hai.PristineListing.Core;
 using Newtonsoft.Json.Linq;
+using OneOf;
+using OneOf.Types;
 using Semver;
 
 namespace Hai.PristineListing.Gatherer;
@@ -395,7 +397,7 @@ public class PLGatherer
             },
             alcomConvention = new PLCoreOutputPackageALCOMConvention
             {
-                yanked = vrcGetNullable?["yanked"] != null ? ExtractALCOMYankedField(vrcGetNullable?["yanked"]) : null,
+                yanked = ExtractALCOMYankedUnionField(vrcGetNullable?["yanked"]),
                 vrcGetData = vrcGetNullable
             },
             
@@ -403,6 +405,18 @@ public class PLGatherer
             semver = SemVersion.Parse(version, SemVersionStyles.Any),
             unitypackageUrl = unityPackageNullable?.downloadUrl,
             unitypackageDownloadCount = unityPackageNullable?.downloadCount
+        };
+    }
+
+    private OneOf<string, bool, None> ExtractALCOMYankedUnionField(JToken tokenNullable)
+    {
+        if (tokenNullable == null) return new None();
+
+        return tokenNullable.Type switch
+        {
+            JTokenType.String => tokenNullable.Value<string>(),
+            JTokenType.Boolean => tokenNullable.Value<bool>(),
+            _  => throw new DataException("Can't deserialize author from package.json")
         };
     }
 
@@ -424,17 +438,6 @@ public class PLGatherer
             email: authorObject["email"]?.Value<string>(),
             url: authorObject["url"]?.Value<string>()
         );
-    }
-
-    private PLCoreOutputALCOMYanked ExtractALCOMYankedField(JToken yankedToken)
-    {
-        // ReSharper disable once SwitchExpressionHandlesSomeKnownEnumValuesWithExceptionInDefault
-        return yankedToken.Type switch
-        {
-            JTokenType.Boolean => PLCoreOutputALCOMYanked.FromBool(yankedToken.Value<bool>()),
-            JTokenType.String => PLCoreOutputALCOMYanked.FromString(yankedToken.Value<string>()),
-            _  => throw new DataException("Can't deserialize yanked from package.json")
-        };
     }
 
     private Dictionary<string, string> AsDictionary(JObject objNullable)

@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json.Linq;
+using OneOf.Types;
 using Semver;
 
 namespace Hai.PristineListing.Core;
@@ -37,54 +38,8 @@ public class PLCoreOutputPackageVersion
 
 public class PLCoreOutputPackageALCOMConvention
 {
-    public PLCoreOutputALCOMYanked yanked;
+    public OneOf.OneOf<string, bool, None> yanked;
     public JObject vrcGetData;
-}
-
-
-public class PLCoreOutputALCOMYanked
-{
-    public PLCoreOutputALCOMYankedKind Kind { get; private init; }
-    private string _stringForm;
-    private bool _boolForm;
-
-    private PLCoreOutputALCOMYanked() {}
-
-    public static PLCoreOutputALCOMYanked FromString(string str)
-    {
-        return new PLCoreOutputALCOMYanked
-        {
-            Kind = PLCoreOutputALCOMYankedKind.String,
-            _stringForm = str
-        };
-    }
-
-    public static PLCoreOutputALCOMYanked FromBool(bool b)
-    {
-        return new PLCoreOutputALCOMYanked
-        {
-            Kind = PLCoreOutputALCOMYankedKind.Bool,
-            _boolForm = b
-        };
-    }
-
-    public string AsString()
-    {
-        if (Kind != PLCoreOutputALCOMYankedKind.String) throw new InvalidCastException();
-        return _stringForm;
-    }
-
-    public bool AsBool()
-    {
-        if (Kind != PLCoreOutputALCOMYankedKind.String) throw new InvalidCastException();
-        return _boolForm;
-    }
-}
-
-public enum PLCoreOutputALCOMYankedKind
-{
-    String,
-    Bool
 }
 
 public class PLCoreOutputPackageUPMSpecification
