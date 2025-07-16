@@ -21,17 +21,31 @@ Look at the workflow of [hai-vr/vpm-listing](https://github.com/hai-vr/vpm-listi
 
 ### Settings
 
-- `defaultIncludePrereleases` bool: By default, include prereleases. 
+- `defaultIncludePrereleases` bool: If `true`, prereleases will be included, unless overriden on a per-repository basis. Defaults to `true`.
 - `defaultMode` string enum: By default:
-  - `PackageJsonAssetOnly`: Only use the `package.json` asset of the release to extract information.
+  - `PackageJsonAssetOnly`: Only use the `package.json` asset of the release to extract information. This is the default.
   - `ExcessiveWhenNeeded`: Use the `package.json` asset of the release to extract information; if there's none, try to download the zip and read the `package.json` file in that zip.
   - `ExcessiveAlways`: Always download the zip and read the `package.json` file in that zip.
   - Additional notes:
     - If the zip is downloaded, the value of `zipSHA256` will be calculated.
     - If the zip is not downloaded, it will not calculate any `zipSHA256` value (see [Differences](#differences) section below).
 - `excessiveModeToleratesPackageJsonAssetMissing` bool: If true, when running excessive mode, download the zip even if there is no `package.json` asset in the release.
+  - If you have GitHub releases that contain multiple packages split into the assets of that release, then setting this to true is necessary.
 - `includeDownloadCount` bool: Append the number of downloads to the description of that version.
 - `forceOutputAuthorAsObject` bool: If true, the index will force the `author` field to be an object, even if the `package.json` defines it as a string. This will only affect the JSON output, not the webpage.
+  - If you intend to support other clients than ALCOM, setting this to true may be necessary, as some other clients do not correctly follow the [Package manifest specifcation](https://docs.unity3d.com/Manual/upm-manifestPkg.html#:~:text=author,Object%20or%20string).
+
+### Per-repository settings
+
+In the `input.json` (see [/pristine-listing-action/input.example.json](/pristine-listing-action/input.example.json)), the products array contains objects that define which GitHub repositories that will be pulled.
+
+Each GitHub repository can have different settings, as defined by its object:
+- `repository` (**required**): The name of the repository as `owner/name`
+- `includePrereleases`: Overrides `defaultIncludePrereleases` (see [Settings](#settings) above).
+- `mode`: Overrides `defaultMode` (see [Settings](#settings) above).
+- `onlyPackageNames`: Defines a list of package names that will be included.
+  - If the array is empty or this property is not defined, then it will accept all packages from that repository.
+  - This array can safely contain package names that don't exist in that repository.
 
 ### Include or Exclude packages
 
