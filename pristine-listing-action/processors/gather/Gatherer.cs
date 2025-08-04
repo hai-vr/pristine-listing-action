@@ -453,8 +453,13 @@ public class PLGatherer
     private static bool IsAssetThatZipFile(JToken assetUns)
     {
         var contentType = assetUns["content_type"].Value<string>();
-        return (contentType == "application/zip" || contentType == "application/x-zip-compressed")
-               && assetUns[AssetName].Value<string>().ToLowerInvariant().EndsWith(".zip");
+        if (contentType == "application/zip" || contentType == "application/x-zip-compressed")
+        {
+            var fileName = assetUns[AssetName].Value<string>().ToLowerInvariant();
+            return fileName.EndsWith(".zip")
+                   && !fileName.EndsWith("-executable.zip"); // Special case
+        }
+        return false;
     }
 
     private static bool IsAssetThatPackageJsonFile(JToken assetUns)
