@@ -73,7 +73,9 @@ Each GitHub repository can have different settings, as defined by its object:
 - This is not fault-tolerant: The repositories in `input.json` should point to repositories that you trust or have control of.
   If a release of some repository contains garbage in its `package.json` then it may fail to execute.
   - This is not injection-tolerant: If a `package.json` contains javascript then it may execute in the browser webpage.
-- Another repository contains are used for testing.
+- The contents of another repository are used for testing.
+- If a zip file ends with `-executable.zip`, it will not be used as the download link.
+  - This was added due to one of my projects intentionally producing multiple zip artifacts for the same release.
 
 ## Development
 
