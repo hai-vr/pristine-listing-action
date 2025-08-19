@@ -161,7 +161,13 @@ public class PLGatherer
                 SortPackage(package);
             }
 
-            return packageNameToPackage.Values.ToList();
+            var result = packageNameToPackage.Values.ToList();
+            if (result.Count == 0)
+            {
+                throw new DataException($"No packages found in {product.repository}, this is not normal. Aborting");
+            }
+            
+            return result;
         }
         catch (Exception)
         {
