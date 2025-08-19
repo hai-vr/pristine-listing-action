@@ -39,6 +39,7 @@ public class ProgramTest
             .Setup(it => it.Parse(fileContents))
             .Returns(returnedFromParser);
         var returnedFromGatherer = new PLCoreOutputListing();
+        returnedFromGatherer.packages = new Dictionary<string, PLCoreOutputPackage>();
         gatherer
             .Setup(it => it.DownloadAndAggregate(returnedFromParser))
             .ReturnsAsync(returnedFromGatherer);

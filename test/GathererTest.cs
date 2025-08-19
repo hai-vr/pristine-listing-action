@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Data;
+using System.Net;
 using Hai.PristineListing.Core;
 using Hai.PristineListing.Gatherer;
 using Moq;
@@ -23,7 +24,7 @@ public class GathererTest
     }
     
     [Test]
-    public async Task It_should_request_releases_and_return_listing_with_no_packages()
+    public async Task It_should_request_releases_and_throw_exception_when_repository_has_no_packages()
     {
         // Given
         var response = new HttpResponseMessage(HttpStatusCode.OK)
@@ -42,30 +43,39 @@ public class GathererTest
 
         
         // When
-        PLCoreOutputListing result = await _sut.DownloadAndAggregate(new PLCoreInput
+        try
         {
-            listingData = new PLCoreInputListingData
+            PLCoreOutputListing result = await _sut.DownloadAndAggregate(new PLCoreInput
             {
-                id = "Id",
-                author = "Author",
-                name = "Name",
-                url = "https://example.com/index.json"
-            },
-            settings = new PLCoreInputSettings
-            {
-                excessiveModeToleratesPackageJsonAssetMissing = false
-            },
-            products =
-            [
-                new PLCoreInputProduct
+                listingData = new PLCoreInputListingData
                 {
-                    repository = "test/our-repository",
-                    mode = PLCoreInputMode.PackageJsonAssetOnly,
-                    includePrereleases = true,
-                    onlyPackageNames = null
-                }
-            ]
-        });
+                    id = "Id",
+                    author = "Author",
+                    name = "Name",
+                    url = "https://example.com/index.json"
+                },
+                settings = new PLCoreInputSettings
+                {
+                    excessiveModeToleratesPackageJsonAssetMissing = false
+                },
+                products =
+                [
+                    new PLCoreInputProduct
+                    {
+                        repository = "test/our-repository",
+                        mode = PLCoreInputMode.PackageJsonAssetOnly,
+                        includePrereleases = true,
+                        onlyPackageNames = null
+                    }
+                ]
+            });
+            
+            Assert.Fail("Should have thrown an exception");
+        }
+        catch (DataException e)
+        {
+            e.Message.ShouldBe("No packages found in test/our-repository, this is not normal. Aborting");
+        }
         
         // Then
         _handlerMock.Protected().Verify(
@@ -76,13 +86,13 @@ public class GathererTest
                 req.RequestUri == new Uri("https://api.github.com/repos/test/our-repository/releases?per_page=100")),
             ItExpr.IsAny<CancellationToken>()
         );
-        result.ShouldBeEquivalentTo(new PLCoreOutputListing
-        {
-            id = "Id",
-            author = "Author",
-            name = "Name",
-            url = "https://example.com/index.json",
-            packages = new Dictionary<string, PLCoreOutputPackage>()
-        });
+        // result.ShouldBeEquivalentTo(new PLCoreOutputListing
+        // {
+        //     id = "Id",
+        //     author = "Author",
+        //     name = "Name",
+        //     url = "https://example.com/index.json",
+        //     packages = new Dictionary<string, PLCoreOutputPackage>()
+        // });
     }
 }
