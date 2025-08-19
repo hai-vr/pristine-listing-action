@@ -79,6 +79,8 @@ public class Program
         var outputAggregation = await aggregatorTask;
 
         _modifier.Modify(input, outputListing);
+        
+        Console.WriteLine($"We've collected a total of {outputListing.packages.Count} packages with {outputListing.packages.Values.Sum(it => it.versions.Count)} total versions.");
 
         await _outputter.Write(input.settings, outputListing, outputAggregation);
     }

@@ -21,6 +21,8 @@ public class PLGatherer
     private const string AssetDownloadCount = "download_count";
 
     private readonly HttpClient _http;
+    private readonly SemaphoreSlim _throttleSemaphore;
+    private readonly TimeSpan _throttleDelay;
 
     public PLGatherer(string githubToken) : this(githubToken, new HttpClient()) { }
 
@@ -33,6 +35,9 @@ public class PLGatherer
         _http = httpClient;
         _http.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", githubToken);
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("pristine-listing-action", "1.0.0"));
+        
+        _throttleSemaphore = new SemaphoreSlim(5, 5);
+        _throttleDelay = TimeSpan.FromMilliseconds(200);
     }
 
     public virtual async Task<PLCoreOutputListing> DownloadAndAggregate(PLCoreInput input)
@@ -480,7 +485,7 @@ public class PLGatherer
         var request = new HttpRequestMessage(HttpMethod.Get, zipUrl);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
 
-        var response = await _http.SendAsync(request, source.Token);
+        var response = await SendAsyncThrottled(request, source.Token);
         if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
 
         var data = await response.Content.ReadAsByteArrayAsync();
@@ -514,7 +519,7 @@ public class PLGatherer
         var request = new HttpRequestMessage(HttpMethod.Get, packageJsonUrl);
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-        var response = await _http.SendAsync(request, source.Token);
+        var response = await SendAsyncThrottled(request, source.Token);
         if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
 
         var packageJson = await response.Content.ReadAsStringAsync();
@@ -561,7 +566,7 @@ public class PLGatherer
             using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
             Console.WriteLine($"Getting release data at {apiUrl}... (iteration #{iteration})");
 
-            var response = await _http.SendAsync(request, source.Token);
+            var response = await SendAsyncThrottled(request, source.Token);
             if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
 
             var responseStr = await response.Content.ReadAsStringAsync(source.Token);
@@ -587,6 +592,21 @@ public class PLGatherer
         } while (hasNext);
         
         return releasesUns;
+    }
+
+    private async Task<HttpResponseMessage> SendAsyncThrottled(HttpRequestMessage request, CancellationToken cancellationToken)
+    {
+        await _throttleSemaphore.WaitAsync(cancellationToken);
+        try
+        {
+            var response = await _http.SendAsync(request, cancellationToken);
+            await Task.Delay(_throttleDelay, cancellationToken);
+            return response;
+        }
+        finally
+        {
+            _throttleSemaphore.Release();
+        }
     }
 
     private bool TryParseNextLink(string linkHeader, out string result)
