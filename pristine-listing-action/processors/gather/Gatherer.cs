@@ -1,4 +1,6 @@
-﻿using System.Data;
+﻿#define USE_THROTTLING
+
+using System.Data;
 using System.IO.Compression;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
@@ -486,6 +488,9 @@ public class PLGatherer
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/octet-stream"));
 
         var response = await SendAsyncThrottled(request, source.Token);
+        
+        Console.WriteLine($"...downloaded zip {zipUrl}.");
+        
         if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
 
         var data = await response.Content.ReadAsByteArrayAsync();
@@ -520,6 +525,9 @@ public class PLGatherer
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
         var response = await SendAsyncThrottled(request, source.Token);
+        
+        Console.WriteLine($"...downloaded packageJson {packageJsonUrl}.");
+        
         if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
 
         var packageJson = await response.Content.ReadAsStringAsync();
@@ -564,9 +572,12 @@ public class PLGatherer
         do
         {
             using var request = new HttpRequestMessage(HttpMethod.Get, apiUrl);
-            Console.WriteLine($"Getting release data at {apiUrl}... (iteration #{iteration})");
+            Console.WriteLine($"Getting release data at {apiUrl}... (iteration #{iteration})...");
 
             var response = await SendAsyncThrottled(request, source.Token);
+            
+            Console.WriteLine($"...got release data from {apiUrl}... (iteration #{iteration}).");
+            
             if (!response.IsSuccessStatusCode) throw new InvalidDataException($"Did not receive a valid response from GitHub: {response.StatusCode}");
 
             var responseStr = await response.Content.ReadAsStringAsync(source.Token);
@@ -596,6 +607,7 @@ public class PLGatherer
 
     private async Task<HttpResponseMessage> SendAsyncThrottled(HttpRequestMessage request, CancellationToken cancellationToken)
     {
+#if USE_THROTTLING
         await _throttleSemaphore.WaitAsync(cancellationToken);
         try
         {
@@ -607,6 +619,9 @@ public class PLGatherer
         {
             _throttleSemaphore.Release();
         }
+#else
+        return await _http.SendAsync(request, cancellationToken);
+#endif
     }
 
     private bool TryParseNextLink(string linkHeader, out string result)
