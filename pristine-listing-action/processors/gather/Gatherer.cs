@@ -245,7 +245,8 @@ public class PLGatherer
             useExcessiveMode = false,
                     
             urlOfPackageDownloadToStore = zipAsset[AssetBrowserDownloadUrl].Value<string>(),
-            unityPackageNullable = FindUnitypackageAssetOrNull(relevantReleaseUns)
+            unityPackageNullable = FindUnitypackageAssetOrNull(relevantReleaseUns),
+            executableNullable = FindExecutableAssetOrNull(relevantReleaseUns)
         } };
     }
 
@@ -324,7 +325,7 @@ public class PLGatherer
         return new PLPackageVersionFetchResult
         {
             success = true,
-            version = ToPackage(intermediary, downloadCount, downloadUrl, packageToFetch.unityPackageNullable)
+            version = ToPackage(intermediary, downloadCount, downloadUrl, packageToFetch.unityPackageNullable, packageToFetch.executableNullable)
         };
     }
 
@@ -339,7 +340,7 @@ public class PLGatherer
         return new PLPackageVersionFetchResult
         {
             success = true,
-            version = ToPackage(intermediary, downloadCount, downloadUrl, packageToFetch.unityPackageNullable)
+            version = ToPackage(intermediary, downloadCount, downloadUrl, packageToFetch.unityPackageNullable, packageToFetch.executableNullable)
         };
     }
 
@@ -354,7 +355,18 @@ public class PLGatherer
         };
     }
 
-    private PLCoreOutputPackageVersion ToPackage(PLIntermediary intermediary, int downloadCount, string downloadUrl, PLUnitypackageIntermediary unityPackageNullable)
+    private static PLExecutableIntermediary FindExecutableAssetOrNull(JToken releaseUns)
+    {
+        var executableAssetNullable = releaseUns[ReleaseAsset].FirstOrDefault(assetUns => assetUns[AssetName].Value<string>().ToLowerInvariant().EndsWith("-executable.zip"));
+        if (executableAssetNullable == null) return null;
+        return new PLExecutableIntermediary
+        {
+            downloadUrl = executableAssetNullable[AssetBrowserDownloadUrl].Value<string>(),
+            downloadCount = executableAssetNullable[AssetDownloadCount].Value<int>()
+        };
+    }
+
+    private PLCoreOutputPackageVersion ToPackage(PLIntermediary intermediary, int downloadCount, string downloadUrl, PLUnitypackageIntermediary unityPackageNullable, PLExecutableIntermediary executableNullable)
     {
         var package = JObject.Parse(intermediary.packageJson);
 
@@ -415,7 +427,9 @@ public class PLGatherer
             downloadCount = downloadCount,
             semver = SemVersion.Parse(version, SemVersionStyles.Any),
             unitypackageUrl = unityPackageNullable?.downloadUrl,
-            unitypackageDownloadCount = unityPackageNullable?.downloadCount
+            unitypackageDownloadCount = unityPackageNullable?.downloadCount,
+            executableUrl = executableNullable?.downloadUrl,
+            executableDownloadCount = executableNullable?.downloadCount
         };
     }
 

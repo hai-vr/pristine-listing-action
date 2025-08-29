@@ -21,6 +21,12 @@ internal class PLUnitypackageIntermediary
     public int downloadCount;
 }
 
+internal class PLExecutableIntermediary
+{
+    public string downloadUrl;
+    public int downloadCount;
+}
+
 internal class PLPackageToFetch
 {
     public string urlOfDataToFetch; // May be package.json
@@ -30,4 +36,5 @@ internal class PLPackageToFetch
     
     public string urlOfPackageDownloadToStore;
     public PLUnitypackageIntermediary unityPackageNullable;
+    public PLExecutableIntermediary executableNullable;
 }

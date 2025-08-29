@@ -189,8 +189,12 @@ public class PLOutputter
             {
                 var appendUnitypackageDownload = version.unitypackageUrl != null ? $" \\[[.unitypackage]({version.unitypackageUrl})\\]" : "";
                 var appendUnitypackageDownloadCount = version.unitypackageDownloadCount != null ? $" *({version.unitypackageDownloadCount})*" : "";
+                
+                var appendExecutableDownload = version.executableUrl != null ? $" \\[[software executable .zip]({version.executableUrl})\\]" : "";
+                var appendExecutableDownloadCount = version.executableDownloadCount != null ? $" *(executable: {version.executableDownloadCount})*" : "";
+                
                 var versionFormatted = version.semver.IsRelease ? $"**{version.upmManifest.version}**" : version.upmManifest.version;
-                sw.WriteLine($"  - {versionFormatted} \\[[.zip]({version.listingConvention.url})\\]{appendUnitypackageDownload} -> *{version.downloadCount} downloads*{appendUnitypackageDownloadCount}");
+                sw.WriteLine($"  - {versionFormatted} \\[[.zip]({version.listingConvention.url})\\]{appendUnitypackageDownload}{appendExecutableDownload} -> *{version.downloadCount} downloads*{appendUnitypackageDownloadCount}{appendExecutableDownloadCount}");
             }
             sw.WriteLine("");
         }

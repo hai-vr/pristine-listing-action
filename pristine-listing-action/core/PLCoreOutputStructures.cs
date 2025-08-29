@@ -33,6 +33,8 @@ public class PLCoreOutputPackageVersion
     internal SemVersion semver;
     internal string? unitypackageUrl;
     internal int? unitypackageDownloadCount;
+    internal string? executableUrl;
+    internal int? executableDownloadCount;
 }
 
 public class PLCoreOutputPackageALCOMConvention
