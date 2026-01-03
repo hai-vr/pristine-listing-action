@@ -1,4 +1,5 @@
-﻿using Hai.PristineListing.Core;
+﻿using System.Text.Json.Serialization;
+using Hai.PristineListing.Core;
 
 namespace Hai.PristineListing.Outputter;
 
@@ -63,6 +64,9 @@ internal class PLOutputPackageVersion
     public Dictionary<string, string> legacyFolders;
     public Dictionary<string, string> legacyFiles;
     public List<string> legacyPackages;
+    
+    [JsonPropertyName("vrc-get")]
+    public PLOutputVrcGet? vrcGet;
 
     internal static PLOutputPackageVersion FromCore(PLCoreOutputPackageVersion version)
     {
@@ -93,6 +97,7 @@ internal class PLOutputPackageVersion
             keywords = upmManifest.keywords,
             licensesUrl = upmManifest.licensesUrl,
             unityRelease = upmManifest.unityRelease,
+            vrcGet = version.alcomConvention != null ? PLOutputVrcGet.FromCore(version.alcomConvention) : null,
         };
     }
 }
@@ -128,5 +133,20 @@ internal class PLOutputSample
             description = outputSample.description,
             path = outputSample.path
         };
+    }
+}
+
+internal class PLOutputVrcGet
+{
+    public object? yanked;
+
+    public static PLOutputVrcGet FromCore(PLCoreOutputPackageALCOMConvention convention)
+    {
+        var result = new PLOutputVrcGet();
+        if (convention.yanked is PLCoreOutputALCOMYanked yanked)
+        {
+            result.yanked = yanked.Kind == PLCoreOutputALCOMYankedKind.Bool ? yanked.AsBool() : yanked.AsString();
+        }
+        return result;
     }
 }

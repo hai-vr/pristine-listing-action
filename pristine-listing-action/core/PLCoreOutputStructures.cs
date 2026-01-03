@@ -39,7 +39,7 @@ public class PLCoreOutputPackageVersion
 
 public class PLCoreOutputPackageALCOMConvention
 {
-    public PLCoreOutputALCOMYanked yanked;
+    public PLCoreOutputALCOMYanked? yanked;
     public JObject vrcGetData;
 }
 
