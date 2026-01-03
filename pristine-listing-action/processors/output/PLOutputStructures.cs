@@ -1,5 +1,5 @@
-﻿using System.Text.Json.Serialization;
-using Hai.PristineListing.Core;
+﻿using Hai.PristineListing.Core;
+using Newtonsoft.Json;
 
 namespace Hai.PristineListing.Outputter;
 
@@ -65,7 +65,7 @@ internal class PLOutputPackageVersion
     public Dictionary<string, string> legacyFiles;
     public List<string> legacyPackages;
     
-    [JsonPropertyName("vrc-get")]
+    [JsonProperty("vrc-get")]
     public PLOutputVrcGet? vrcGet;
 
     internal static PLOutputPackageVersion FromCore(PLCoreOutputPackageVersion version)
